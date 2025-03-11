@@ -90,7 +90,7 @@ local field = Instance.new("TextBox")
 field.Name = "field"
 field.FontFace = Font.new("rbxasset://fonts/families/Sarpanch.json")
 field.BackgroundColor3 = Color3.new(0.125, 0.125, 0.125)
-field.TextColor3 = Color3.new()
+field.TextColor3 = Color3.new(1, 1, 1)
 field.BorderColor3 = Color3.new(0.125, 0.125, 0.125)
 field.Text = ""
 field.TextSize = 14
@@ -128,7 +128,7 @@ title.Parent = frame
 
 key_ui.Parent = game:GetService('CoreGui')
 local str = game:HttpGet('https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-placeholder-keyscript.lua') -- no script yet
-local func = loadstring(func)
+local func = loadstring(str)
 
 connect(submitbutton.MouseButton1Up, function()
     local key = field.Text:lower()
@@ -141,6 +141,15 @@ connect(submitbutton.MouseButton1Up, function()
         title.Text = 'omg key worked ok bye'
         wait(1)
         env.stop_voltex_key_system()
+    end
+end)
+
+connect(getkeybutton.MouseButton1Up, function()
+    if type(setclipboard) == 'function' then
+        setclipboard('https://vtex.mysellauth.com/')
+        title.Text = 'copied to clipboard (paste in your browser)'
+    else
+        title.Text = 'imagine not having setclipboard'
     end
 end)
 
