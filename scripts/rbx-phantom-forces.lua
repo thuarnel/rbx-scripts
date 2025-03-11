@@ -131,160 +131,169 @@ local function releaseHighlight(highlight)
 	table.insert(highlightPool, highlight)
 end
 
-connect(runtime.Stepped, function()
+local frame_time = 1 / 30
+local last_time = tick()
+
+connect(runtime.RenderStepped, function()
 	cameraPart.CFrame = camera.CFrame - Vector3.new(0, 2, 0)
-	if typeof(sleeves) ~= 'Instance' or not sleeves:IsDescendantOf(camera) then
-		sleeves = camera:FindFirstChild('Sleeves', true)
-	end
 
-	local myTeam
-	if sleeves then
-		local texture = sleeves:FindFirstChildWhichIsA('Texture', true)
-		if texture and texture:IsA('Texture') then
-			if texture.Color3 == ghosts then
-				myTeam = 'ghosts'
-			elseif texture.Color3 == phantoms then
-				myTeam = 'phantoms'
-			end
+	local current_time = tick()
+    if current_time - last_time >= frame_time then
+        last_time = current_time
+
+		if typeof(sleeves) ~= 'Instance' or not sleeves:IsDescendantOf(camera) then
+			sleeves = camera:FindFirstChild('cSleeves', true)
 		end
-	else
-		arrow_img.Visible = false
-	end
-
-	local closestRoot = nil
-	local closestDistance = math.huge
-	local myPosition = camera.CFrame.Position
-
-	for _, root in pairs(roots:GetChildren()) do
-		if typeof(root) == 'Instance' and root:IsA('BasePart') then
-			local rootPosition = root.Position
-			local distance = (rootPosition - myPosition).Magnitude
-
-			root.Transparency = 0
-
-			local highlight = highlights[root]
-			if not highlight then
-				highlight = getHighlight()
-				highlights[root] = highlight
-			end
-
-			highlight.Adornee = characters[root] or root
-			highlight.Parent = ui
-
-			for r, model in pairs(characters) do
-				if not model or (not model:IsDescendantOf(workspace)) then
-					highlight.Adornee = r
-					characters[r] = nil
+	
+		local myTeam
+		if sleeves then
+			local texture = sleeves:FindFirstChildWhichIsA('Texture', true)
+			if texture and texture:IsA('Texture') then
+				if texture.Color3 == ghosts then
+					myTeam = 'ghosts'
+				elseif texture.Color3 == phantoms then
+					myTeam = 'phantoms'
 				end
 			end
-
-			if not characters[root] and (not casting[root]) then
-				local rayOrigin = root.Position + Vector3.new(0, 3, 0)
-				local rayDirection = Vector3.new(0, -6, 0)
-				local raycastParams = RaycastParams.new()
-				raycastParams.FilterDescendantsInstances = {
-					workspace.Map,
-					workspace.Map.MapParts
-				}
-				raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-				local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-				if result then
-					local hitPart = result.Instance
-					local hitModel = hitPart:FindFirstAncestorWhichIsA('Model')
-					local hitFolder = hitPart:FindFirstAncestorWhichIsA('Folder')
-					if hitFolder and hitModel then
-						characters[root] = hitModel
-						highlight.Adornee = hitModel
+		else
+			arrow_img.Visible = false
+		end
+	
+		local closestRoot = nil
+		local closestDistance = math.huge
+		local myPosition = camera.CFrame.Position
+	
+		for _, root in pairs(roots:GetChildren()) do
+			if typeof(root) == 'Instance' and root:IsA('BasePart') then
+				local rootPosition = root.Position
+				local distance = (rootPosition - myPosition).Magnitude
+	
+				root.Transparency = 0
+	
+				local highlight = highlights[root]
+				if not highlight then
+					highlight = getHighlight()
+					highlights[root] = highlight
+				end
+	
+				highlight.Adornee = characters[root] or root
+				highlight.Parent = ui
+	
+				for r, model in pairs(characters) do
+					if not model or (not model:IsDescendantOf(workspace)) then
+						highlight.Adornee = r
+						characters[r] = nil
 					end
 				end
-			end
-
-			local character = characters[root]
-			local theirTeam
-			if character then
-				local texture = character:FindFirstChildWhichIsA('Texture', true)
-				if texture then
-					if suit_ghosts[texture.Texture] then
-						theirTeam = 'ghosts'
-					elseif suit_phantoms[texture.Texture] then
-						theirTeam = 'phantoms'
-					end
-				end
-
-				if myTeam and theirTeam then
-					if theirTeam ~= myTeam then
-						highlight.Enabled = true
-
-						local rootPosition = root.Position
-						local distance = (rootPosition - myPosition).Magnitude
-		
-						if distance < closestDistance then
-							closestDistance = distance
-							closestRoot = root
+	
+				if not characters[root] and (not casting[root]) then
+					local rayOrigin = root.Position + Vector3.new(0, 3, 0)
+					local rayDirection = Vector3.new(0, -6, 0)
+					local raycastParams = RaycastParams.new()
+					raycastParams.FilterDescendantsInstances = {
+						workspace.Map,
+						workspace.Map.MapParts
+					}
+					raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+					local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+					if result then
+						local hitPart = result.Instance
+						local hitModel = hitPart:FindFirstAncestorWhichIsA('Model')
+						local hitFolder = hitPart:FindFirstAncestorWhichIsA('Folder')
+						if hitFolder and hitModel then
+							characters[root] = hitModel
+							highlight.Adornee = hitModel
 						end
-					else
-						highlight.Enabled = false
 					end
 				end
+	
+				local character = characters[root]
+				local theirTeam
+				if character then
+					local texture = character:FindFirstChildWhichIsA('Texture', true)
+					if texture then
+						if suit_ghosts[texture.Texture] then
+							theirTeam = 'ghosts'
+						elseif suit_phantoms[texture.Texture] then
+							theirTeam = 'phantoms'
+						end
+					end
+	
+					if myTeam and theirTeam then
+						if theirTeam ~= myTeam then
+							highlight.Enabled = true
+	
+							local rootPosition = root.Position
+							local distance = (rootPosition - myPosition).Magnitude
+			
+							if distance < closestDistance then
+								closestDistance = distance
+								closestRoot = root
+							end
+						else
+							highlight.Enabled = false
+						end
+					end
+				end
+	
+				if isRootBlocked(root) then
+					highlight.FillColor = red
+					highlight.OutlineColor = red
+				else
+					highlight.FillColor = green
+					highlight.OutlineColor = green
+				end
+	
+				-- Handle Beam creation/updating (unchanged)
+				local beam = beams[root]
+				if not beam then
+					local attachment0 = Instance.new('Attachment')
+					attachment0.Position = Vector3.new(0, 0, 0)
+					attachment0.Parent = cameraPart
+					table.insert(instances, attachment0)
+					local attachment1 = Instance.new('Attachment')
+					attachment1.Position = Vector3.new(0, 0, 0)
+					attachment1.Parent = root
+					table.insert(instances, attachment1)
+					beam = Instance.new('Beam')
+					beam.Attachment0 = attachment0
+					beam.Attachment1 = attachment1
+					beam.Width0 = 0.05
+					beam.Width1 = 0.05
+					beam.FaceCamera = true
+					beam.Color = ColorSequence.new(green)
+					beam.Parent = attachment0
+					table.insert(instances, beam)
+					beams[root] = beam
+				end
+				beam.Enabled = (not isRootBlocked(root)) and (myTeam and theirTeam and (myTeam ~= theirTeam))
 			end
-
-			if isRootBlocked(root) then
-				highlight.FillColor = red
-				highlight.OutlineColor = red
-			else
-				highlight.FillColor = green
-				highlight.OutlineColor = green
-			end
-
-			-- Handle Beam creation/updating (unchanged)
-			local beam = beams[root]
-			if not beam then
-				local attachment0 = Instance.new('Attachment')
-				attachment0.Position = Vector3.new(0, 0, 0)
-				attachment0.Parent = cameraPart
-				table.insert(instances, attachment0)
-				local attachment1 = Instance.new('Attachment')
-				attachment1.Position = Vector3.new(0, 0, 0)
-				attachment1.Parent = root
-				table.insert(instances, attachment1)
-				beam = Instance.new('Beam')
-				beam.Attachment0 = attachment0
-				beam.Attachment1 = attachment1
-				beam.Width0 = 0.05
-				beam.Width1 = 0.05
-				beam.FaceCamera = true
-				beam.Color = ColorSequence.new(green)
-				beam.Parent = attachment0
-				table.insert(instances, beam)
-				beams[root] = beam
-			end
-			beam.Enabled = (not isRootBlocked(root)) and (myTeam and theirTeam and (myTeam ~= theirTeam))
 		end
-	end
-
-	if closestRoot then
-		local rootPosition = closestRoot.Position
-		local flatCFrame = CFrame.lookAt(myPosition, myPosition + camera.CFrame.LookVector * Vector3.new(1, 0, 1))
-		local travel = flatCFrame:Inverse() * rootPosition
 	
-		local rot = math.atan2(travel.Z, travel.X)
-		arrow_img.Rotation = math.deg(rot) + 90
+		if closestRoot then
+			local rootPosition = closestRoot.Position
+			local flatCFrame = CFrame.lookAt(myPosition, myPosition + camera.CFrame.LookVector * Vector3.new(1, 0, 1))
+			local travel = flatCFrame:Inverse() * rootPosition
+		
+			local rot = math.atan2(travel.Z, travel.X)
+			arrow_img.Rotation = math.deg(rot) + 90
+		
+			local minSize, maxSize = 20, 80
+			local minDist, maxDist = 10, 300
+		
+			local scale = math.clamp(1 - ((closestDistance - minDist) / (maxDist - minDist)), 0, 1)
+			local newSize = minSize + (maxSize - minSize) * scale
+		
+			arrow_img.Size = UDim2.new(0, newSize, 0, newSize)
 	
-		local minSize, maxSize = 20, 80
-		local minDist, maxDist = 10, 300
+			local redIntensity = 1 
+			local greenBlue = math.clamp(1 - scale, 0, 1)
 	
-		local scale = math.clamp(1 - ((closestDistance - minDist) / (maxDist - minDist)), 0, 1)
-		local newSize = minSize + (maxSize - minSize) * scale
-	
-		arrow_img.Size = UDim2.new(0, newSize, 0, newSize)
-
-		local redIntensity = 1 
-    	local greenBlue = math.clamp(1 - scale, 0, 1)
-
-    	arrow_img.ImageColor3 = Color3.new(redIntensity, greenBlue, greenBlue) 
-		arrow_img.Visible = true
-	else
-		arrow_img.Visible = false
+			arrow_img.ImageColor3 = Color3.new(redIntensity, greenBlue, greenBlue) 
+			arrow_img.Visible = true
+		else
+			arrow_img.Visible = false
+		end
 	end
 end)
 
