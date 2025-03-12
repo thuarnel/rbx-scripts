@@ -165,11 +165,9 @@ connect(runtime.RenderStepped, function()
 	
 		for _, root in pairs(roots:GetChildren()) do
 			if typeof(root) == 'Instance' and root:IsA('BasePart') then
-				local rootPosition = root.Position
-				local distance = (rootPosition - myPosition).Magnitude
-	
 				root.Transparency = 0
 	
+				local enable_hl = true
 				local highlight = highlights[root]
 				if not highlight then
 					highlight = getHighlight()
@@ -217,25 +215,22 @@ connect(runtime.RenderStepped, function()
 						elseif suit_phantoms[texture.Texture] then
 							theirTeam = 'phantoms'
 						end
+						if theirTeam and myTeam == theirTeam then
+							enable_hl = false
+						end
 					end
-	
-					if myTeam and theirTeam then
-						if theirTeam ~= myTeam then
-							highlight.Enabled = true
-	
-							local rootPosition = root.Position
-							local distance = (rootPosition - myPosition).Magnitude
-			
-							if distance < closestDistance then
-								closestDistance = distance
-								closestRoot = root
-							end
-						else
-							highlight.Enabled = false
+
+					if myTeam and theirTeam and theirTeam ~= myTeam then
+						local rootPosition = root.Position
+						local distance = (rootPosition - myPosition).Magnitude
+
+						if distance < closestDistance then
+							closestDistance = distance
+							closestRoot = root
 						end
 					end
 				end
-	
+
 				if isRootBlocked(root) then
 					highlight.FillColor = red
 					highlight.OutlineColor = red
@@ -266,6 +261,8 @@ connect(runtime.RenderStepped, function()
 					table.insert(instances, beam)
 					beams[root] = beam
 				end
+
+				highlight.Enabled = enable_hl
 				beam.Enabled = (not isRootBlocked(root)) and (myTeam and theirTeam and (myTeam ~= theirTeam))
 			end
 		end
