@@ -16,11 +16,80 @@ end
 local insert = table.insert
 
 local players = game:GetService('Players')
+local coregui = game:GetService('CoreGui')
 local runtime = game:GetService('RunService')
 local lighting = game:GetService('Lighting')
 local tpservice = game:GetService('TeleportService')
 local tweening = game:GetService('TweenService')
 local uis = game:GetService('UserInputService')
+
+local activeNotifications = {}
+
+local function updateNotificationPositions()
+    local baseY = 50
+    local margin = 10
+    local height = 100
+    for i, notif in ipairs(activeNotifications) do
+        local targetY = baseY + (height + margin) * (i - 1)
+        notif.Main:TweenPosition(UDim2.new(1, -330, 0, targetY), "Out", "Sine", 0.5, true)
+    end
+end
+
+local function send_notification(titletxt, text, displayTime)
+    local GUI = Instance.new("ScreenGui")
+    local Main = Instance.new("Frame", GUI)
+    local title = Instance.new("TextLabel", Main)
+    local message = Instance.new("TextLabel", Main)
+    
+    GUI.DisplayOrder = 999999
+    GUI.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    GUI.Name = "NotificationOof"
+    GUI.Parent = coregui
+
+    Main.Name = "MainFrame"
+    Main.BackgroundColor3 = Color3.new(0.156863, 0.156863, 0.156863)
+    Main.BorderSizePixel = 0
+    local baseY = 50
+    local margin = 10
+    local height = 100
+    local notifIndex = #activeNotifications + 1
+    local targetY = baseY + (height + margin) * (notifIndex - 1)
+    Main.Position = UDim2.new(1, 5, 0, targetY)
+    Main.Size = UDim2.new(0, 330, 0, height)
+
+    title.BackgroundColor3 = Color3.new(0, 0, 0)
+    title.BackgroundTransparency = 0.9
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Font = Enum.Font.SourceSansSemibold
+    title.Text = titletxt
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextSize = 17
+    
+    message.BackgroundColor3 = Color3.new(0, 0, 0)
+    message.BackgroundTransparency = 1
+    message.Position = UDim2.new(0, 0, 0, 30)
+    message.Size = UDim2.new(1, 0, 1, -30)
+    message.Font = Enum.Font.SourceSans
+    message.Text = text
+    message.TextColor3 = Color3.new(1, 1, 1)
+    message.TextSize = 16
+
+    insert(activeNotifications, {GUI = GUI, Main = Main})
+    Main:TweenPosition(UDim2.new(1, -330, 0, targetY), "Out", "Sine", 0.5, true)
+    task.delay(displayTime, function()
+        Main:TweenPosition(UDim2.new(1, 5, 0, targetY), "Out", "Sine", 0.5, true)
+        task.delay(0.6, function()
+            for i, notif in ipairs(activeNotifications) do
+                if notif.GUI == GUI then
+                    table.remove(activeNotifications, i)
+                    break
+                end
+            end
+            updateNotificationPositions()
+            GUI:Destroy()
+        end)
+    end)
+end
 
 local instances = {}
 local connections = {}
@@ -39,6 +108,16 @@ local camera = workspace.CurrentCamera
 
 connect(workspace:GetPropertyChangedSignal('CurrentCamera'), function()
     camera = workspace.CurrentCamera
+end)
+
+local fpdh_changing = false
+connect(workspace:GetPropertyChangedSignal('FallenPartsDestroyHeight'), function()
+    if fpdh_changing then
+        return
+    end
+    fpdh_changing = true
+    workspace.FallenPartsDestroyHeight = 0 / 0
+    fpdh_changing = false
 end)
 
 local player = players.LocalPlayer
@@ -487,17 +566,15 @@ cmds:new('age', function(target)
 
     if typeof(target) == 'Instance' and target:IsA('Player') then
         print('[BC]: AccountAge of ' .. target.DisplayName .. ' (@' .. target.Name .. '): ' .. target.AccountAge)
+        send_notification('Account age for ' .. target.DisplayName, target.AccountAge, 4)
     elseif type(target) == 'table' then
         for _, v in pairs(target) do
             if typeof(v) == 'Instance' and v:IsA('Player') then
                 print('[BC]: AccountAge of ' .. v.DisplayName .. ' (@' .. v.Name .. '): ' .. v.AccountAge)
             end
         end
+        send_notification('AccountAge', 'Check the console for your bulk output.', 4)
     end
-end)
-
-cmds:new('nodestroyheight', function()
-    workspace.FallenPartsDestroyHeight = -1e7
 end)
 
 local viewing
@@ -526,10 +603,197 @@ cmds:new('view', function(target)
                 camera.CameraSubject = char
             end
         end)
+        send_notification('Viewing ' .. viewing.DisplayName, 'You are now viewing: ' .. viewing.Name, 4)
     end
 end)
 
 cmds:new('unview', unview)
+
+cmds:new('notools', function()
+    local backpack = player:FindFirstChildWhichIsA('Backpack')
+
+    for _, v in pairs(backpack:GetChildren()) do
+        if v:IsA('Tool') then
+            v:Destroy()
+        end
+    end
+end)
+
+cmds:new('droptools', function()
+    local backpack = player:FindFirstChildWhichIsA('Backpack')
+
+    for _, v in pairs(backpack:GetChildren()) do
+        if v:IsA('Tool') and v.CanBeDropped and character then
+            v.Parent = character
+            task.wait()
+            v.Parent = workspace
+        end
+    end
+end)
+
+cmds:new('annabypasser', function()
+    if not env.anna_bypasser_loaded then
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/AnnaRoblox/AnnaBypasser/refs/heads/main/AnnaBypasser.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                env.anna_bypasser_loaded = true
+                coroutine.resume(coroutine.create(f))
+            end
+        end
+    else
+        local anna_bypasser_gui = game:GetService('CoreGui'):WaitForChild('AnnaBypasser')
+        local frame = anna_bypasser_gui and anna_bypasser_gui:FindFirstChildWhichIsA('Frame')        
+
+        if frame then
+            frame.AnchorPoint = Vector2.new(0.5, 0.5)
+            frame.Position = UDim2.fromScale(0.5, 0.5)
+        end
+    end
+end)
+
+cmds:new('annabypassertweaks', function()
+    if env.anna_bypasser_loaded then
+        local anna_bypasser_gui = game:GetService('CoreGui'):WaitForChild('AnnaBypasser')
+
+        if anna_bypasser_gui then
+            for _, v in pairs(anna_bypasser_gui:GetDescendants()) do
+                if v:IsA('TextBox') then
+                    v.ClearTextOnFocus = false
+                end
+            end
+
+            print('[BC]: Tweaked the AnnaBypasser GUI')
+        end
+    end
+end)
+
+cmds:new('print', function(...)
+    print(...)
+end)
+
+cmds:new('printunanchored', function()
+    local unanchored = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA('BasePart') and v.Anchored ~= true then
+            local char = v:FindFirstAncestorWhichIsA('Model')
+            if char and players:GetPlayerFromCharacter(char) then
+                continue
+            end
+            insert(unanchored, v:GetFullName())
+        end
+    end
+    print('[BC]: Found unanchored part(s): \n\t' .. table.concat(unanchored, '\n\t'))
+end)
+
+local flinging = false
+local fling_death
+
+local function unfling()
+    cmds:execute('clip')
+    if typeof(fling_death) == 'RBXScriptConnection' and fling_death.Connected then
+        fling_death:Disconnect()
+    end
+	flinging = false
+	task.wait(.1)
+    if rootpart then
+        for i,v in pairs(rootpart:GetChildren()) do
+            if v.ClassName == 'BodyAngularVelocity' then
+                v:Destroy()
+            end
+        end
+    end
+    if character then
+        for _, child in pairs(character:GetDescendants()) do
+            if child.ClassName == "Part" or child.ClassName == "MeshPart" then
+                child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
+            end
+        end
+    end
+end
+
+local function fling()
+    unfling()
+    task.wait()
+    if character then
+        for _, child in pairs(character:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.3, 0.5)
+            end
+        end
+        cmds:execute('noclip')
+        task.wait(.1)
+        if rootpart then
+            local bambam = Instance.new("BodyAngularVelocity")
+            bambam.AngularVelocity = Vector3.new(0,99999,0)
+            bambam.MaxTorque = Vector3.new(0, math.huge, 0)
+            bambam.P = math.huge
+            bambam.Parent = rootpart
+        end
+        if character then
+            for i, v in pairs(character) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                    v.Massless = true
+                    v.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+        end
+        flinging = true
+        if humanoid then
+            fling_death = connect(humanoid.Died, function()
+                unfling()
+            end)
+        end
+        repeat
+            bambam.AngularVelocity = Vector3.new(0, 99999, 0)
+            task.wait(.2)
+            bambam.AngularVelocity = Vector3.zero
+            task.wait(.1)
+        until flinging == false
+    end
+end
+
+cmds:new('fling', function()
+    fling()
+end)
+
+cmds:new('unfling', function()
+    unfling()
+end)
+
+local walkflinging = false
+
+cmds:new("walkfling", function()
+    if walkflinging then
+        return
+    end
+    cmds:execute('unwalkfling')
+    if humanoid then
+        connect(humanoid.Died, function()
+            cmds:execute('unwalkfling')
+        end)
+    end
+    cmds:execute('noclip')
+    walkflinging = true
+    repeat runtime.Heartbeat:Wait()
+        local vel, movel = nil, 0.1
+        if rootpart then
+            vel = rootpart.AssemblyLinearVelocity
+            rootpart.AssemblyLinearVelocity = vel * 10000 + Vector3.new(0, 10000, 0)
+            runtime.RenderStepped:Wait()
+            rootpart.AssemblyLinearVelocity = vel
+            runtime.Stepped:Wait()
+            rootpart.AssemblyLinearVelocity = vel + Vector3.new(0, movel, 0)
+            movel = movel * -1
+        end
+    until walkflinging == false
+end)
+
+cmds:new("unwalkfling", function()
+    walkflinging = false
+    cmds:execute('clip')
+end)
 
 cmds:new('stop', function()
     env.stop_basic_commands()
