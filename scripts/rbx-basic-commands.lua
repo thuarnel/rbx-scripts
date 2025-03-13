@@ -671,11 +671,55 @@ cmds:new('annabypassertweaks', function()
 end)
 
 cmds:new('esp', function()
-    
+    if not env.beampacker_esp_loaded then
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-esp.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                env.beampacker_esp_loaded = true
+                coroutine.resume(coroutine.create(f))
+            end
+        end
+    end
 end)
 
 cmds:new('unesp', function()
-    
+    if type(env.stop_beampacker_esp) == 'function' then
+        env.stop_beampacker_esp() 
+    end
+    env.beampacker_esp_loaded = false
+end)
+
+
+local phantomforces_loading = false
+
+cmds:new('phantomforces', function()
+    if phantomforces_loading then
+        return
+    end
+
+    if type(env.stop_phantomforces_esp) == 'function' then
+        env.stop_phantomforces_esp()
+    end
+
+    if game.PlaceId == 292439477 and type(env.stop_phantomforces_esp) ~= 'function' then
+        phantomforces_loading = true
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-phantom-forces.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                coroutine.resume(coroutine.create(f))
+            end
+        end
+    end
+
+    phantomforces_loading = false
+end)
+
+cmds:new('unphantomforces', function()
+    if type(env.stop_phantomforces_esp) == 'function' then
+        env.stop_phantomforces_esp()
+    end
 end)
 
 cmds:new('print', function(...)
