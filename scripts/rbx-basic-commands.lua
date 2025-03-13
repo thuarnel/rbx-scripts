@@ -123,7 +123,6 @@ end)
 
 local player = players.LocalPlayer
 local mouse = player:GetMouse()
-local sens = 0.5
 local character
 local humanoid
 local rootpart
@@ -671,56 +670,35 @@ cmds:new('annabypassertweaks', function()
     end
 end)
 
-local lockon
-local function is_first_person(head)
-    local distance = (camera.CFrame.Position - head.Position).Magnitude
-    return distance <= 0.5
-end
+local phantomforces_loading = false
 
-local function unlockon()
-    if typeof(lockon) == 'RBXScriptConnection' and lockon.Connected then
-        lockon:Disconnect()
+cmds:new('esp', function()
+    if phantomforces_loading then
+        return
     end
-end
 
-cmds:new('lockon', function()
-    unlockon()
+    if type(env.stop_phantomforces_esp) == 'function' then
+        env.stop_phantomforces_esp()
+    end
 
-    lockon = connect(runtime.RenderStepped, function()
-        if character then
-            local head = character:FindFirstChild('Head') or rootpart
-            
-            if head then
-                local nearestPlayer = nil
-                local nearestDistance = math.huge
-
-                for _, p in ipairs(players:GetPlayers()) do
-                    if p ~= player and p.Character then
-                        local targetHead = p.Character:FindFirstChild("Head")
-                        if targetHead then
-                            local distance = (head.Position - targetHead.Position).Magnitude
-                            if distance < nearestDistance then
-                                nearestDistance = distance
-                                nearestPlayer = p
-                            end
-                        end
-                    end
-                end
-        
-                if nearestPlayer and nearestPlayer.Character then
-                    local targetHead = nearestPlayer.Character:FindFirstChild("Head")
-                    if targetHead then
-                        local camPos = camera.CFrame.Position
-                        camera.CFrame = CFrame.new(camPos, targetHead.Position)
-                    end
-                end
+    if game.PlaceId == 292439477 and type(env.stop_phantomforces_esp) ~= 'function' then
+        phantomforces_loading = true
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-phantom-forces.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                coroutine.resume(coroutine.create(f))
             end
         end
-    end)
+    end
+
+    phantomforces_loading = false
 end)
 
-cmds:new('unlockon', function()
-    unlockon()
+cmds:new('unesp', function()
+    if type(env.stop_phantomforces_esp) == 'function' then
+        env.stop_phantomforces_esp()
+    end
 end)
 
 cmds:new('print', function(...)
