@@ -304,7 +304,9 @@ cmds:new('circle', function(target)
             end
 
             circle_loop = connect(runtime.Heartbeat, function(dt)
-                if not circle_target or not rootpart then return break_circle() end
+                if typeof(target) ~= 'Instance' or not circle_target or not rootpart or seatpart then
+                    return break_circle()
+                end
                 circle_angle += circle_speed * dt
                 rootpart.CFrame = circle_target.CFrame * CFrame.new(math.cos(circle_angle) * circle_radius, 0, math.sin(circle_angle) * circle_radius)
             end)
@@ -741,85 +743,9 @@ cmds:new('printunanchored', function()
 end)
 
 local flinging = false
-local fling_death
-
-local function unfling()
-    cmds:execute('clip')
-    if typeof(fling_death) == 'RBXScriptConnection' and fling_death.Connected then
-        fling_death:Disconnect()
-    end
-	flinging = false
-	task.wait(.1)
-    if rootpart then
-        for i,v in pairs(rootpart:GetChildren()) do
-            if v.ClassName == 'BodyAngularVelocity' then
-                v:Destroy()
-            end
-        end
-    end
-    if character then
-        for _, child in pairs(character:GetDescendants()) do
-            if child.ClassName == "Part" or child.ClassName == "MeshPart" then
-                child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
-            end
-        end
-    end
-end
-
-local function fling()
-    unfling()
-    task.wait()
-    if character then
-        for _, child in pairs(character:GetDescendants()) do
-            if child:IsA("BasePart") then
-                child.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.3, 0.5)
-            end
-        end
-        cmds:execute('noclip')
-        task.wait(.1)
-        if rootpart then
-            local bambam = Instance.new("BodyAngularVelocity")
-            bambam.AngularVelocity = Vector3.new(0,99999,0)
-            bambam.MaxTorque = Vector3.new(0, math.huge, 0)
-            bambam.P = math.huge
-            bambam.Parent = rootpart
-        end
-        if character then
-            for i, v in pairs(character) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                    v.Massless = true
-                    v.Velocity = Vector3.new(0, 0, 0)
-                end
-            end
-        end
-        flinging = true
-        if humanoid then
-            fling_death = connect(humanoid.Died, function()
-                unfling()
-            end)
-        end
-        repeat
-            bambam.AngularVelocity = Vector3.new(0, 99999, 0)
-            task.wait(.2)
-            bambam.AngularVelocity = Vector3.zero
-            task.wait(.1)
-        until flinging == false
-    end
-end
 
 cmds:new('fling', function()
-    fling()
-end)
-
-cmds:new('unfling', function()
-    unfling()
-end)
-
-local walkflinging = false
-
-cmds:new("walkfling", function()
-    if walkflinging then
+    if flinging then
         return
     end
     cmds:execute('unwalkfling')
@@ -829,7 +755,7 @@ cmds:new("walkfling", function()
         end)
     end
     cmds:execute('noclip')
-    walkflinging = true
+    flinging = true
     repeat runtime.Heartbeat:Wait()
         local vel, movel = nil, 0.1
         if rootpart then
@@ -841,12 +767,40 @@ cmds:new("walkfling", function()
             rootpart.AssemblyLinearVelocity = vel + Vector3.new(0, movel, 0)
             movel = movel * -1
         end
-    until walkflinging == false
+    until flinging == false
 end)
 
-cmds:new("unwalkfling", function()
-    walkflinging = false
+cmds:new('unfling', function()
+    flinging = false
     cmds:execute('clip')
+end)
+
+cmds:new('fix', function()
+    if game.PlaceId == 417267366 and not env.dollhouse_roleplay_fixed then
+        while not game:IsLoaded() do
+            task.wait(0)
+        end
+        lighting.ExposureCompensation = 0
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA('Light') then
+                v.Brightness /= 10
+            end
+        end
+        env.dollhouse_roleplay_fixed = true
+    end
+end)
+
+cmds:new('dex', function()
+    if not env.dex_loaded then
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/infyiff/backup/main/dex.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                env.dex_loaded = true
+                coroutine.resume(coroutine.create(f))
+            end
+        end
+    end
 end)
 
 cmds:new('stop', function()
