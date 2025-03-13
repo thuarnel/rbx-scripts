@@ -13,15 +13,16 @@ else
     return error('No global environment')
 end
 
+local mousemoverel = env.mousemoverel
 local insert = table.insert
 
-local players = game:GetService('Players')
-local coregui = game:GetService('CoreGui')
-local runtime = game:GetService('RunService')
-local lighting = game:GetService('Lighting')
-local tpservice = game:GetService('TeleportService')
-local tweening = game:GetService('TweenService')
-local uis = game:GetService('UserInputService')
+local players = game:GetService('Players');
+local coregui = game:GetService('CoreGui');
+local runtime = game:GetService('RunService');
+local lighting = game:GetService('Lighting');
+local tpservice = game:GetService('TeleportService');
+local tweening = game:GetService('TweenService');
+local uis = game:GetService('UserInputService');
 
 local activeNotifications = {}
 
@@ -121,6 +122,8 @@ connect(workspace:GetPropertyChangedSignal('FallenPartsDestroyHeight'), function
 end)
 
 local player = players.LocalPlayer
+local mouse = player:GetMouse()
+local sens = 0.5
 local character
 local humanoid
 local rootpart
@@ -666,6 +669,58 @@ cmds:new('annabypassertweaks', function()
             print('[BC]: Tweaked the AnnaBypasser GUI')
         end
     end
+end)
+
+local lockon
+local function is_first_person(head)
+    local distance = (camera.CFrame.Position - head.Position).Magnitude
+    return distance <= 0.5
+end
+
+local function unlockon()
+    if typeof(lockon) == 'RBXScriptConnection' and lockon.Connected then
+        lockon:Disconnect()
+    end
+end
+
+cmds:new('lockon', function()
+    unlockon()
+
+    lockon = connect(runtime.RenderStepped, function()
+        if character then
+            local head = character:FindFirstChild('Head') or rootpart
+            
+            if head then
+                local nearestPlayer = nil
+                local nearestDistance = math.huge
+
+                for _, p in ipairs(players:GetPlayers()) do
+                    if p ~= player and p.Character then
+                        local targetHead = p.Character:FindFirstChild("Head")
+                        if targetHead then
+                            local distance = (head.Position - targetHead.Position).Magnitude
+                            if distance < nearestDistance then
+                                nearestDistance = distance
+                                nearestPlayer = p
+                            end
+                        end
+                    end
+                end
+        
+                if nearestPlayer and nearestPlayer.Character then
+                    local targetHead = nearestPlayer.Character:FindFirstChild("Head")
+                    if targetHead then
+                        local camPos = camera.CFrame.Position
+                        camera.CFrame = CFrame.new(camPos, targetHead.Position)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+cmds:new('unlockon', function()
+    unlockon()
 end)
 
 cmds:new('print', function(...)
