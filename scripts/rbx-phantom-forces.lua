@@ -14,8 +14,8 @@
 --- @diagnostic disable: undefined-global
 local env = type(getgenv) == 'function' and getgenv()
 
-if type(env.stop_root_esp) == 'function' then
-	env.stop_root_esp()
+if type(env.stop_phantomforces_esp) == 'function' then
+	env.stop_phantomforces_esp()
 end
 
 local instances = {}
@@ -29,8 +29,8 @@ end
 
 --[=[ BEGIN SCRIPT ]=]--
 
-local coregui = game:GetService('CoreGui')
-local runtime = game:GetService('RunService')
+local coregui = game:GetService('CoreGui');
+local runtime = game:GetService('RunService');
 local roots = workspace.Roots
 local stop_loops = false
 local camera = workspace.CurrentCamera
@@ -323,7 +323,7 @@ end)
 
 --[=[ END SCRIPT ]=]--
 
-env.stop_root_esp = function()
+env.stop_phantomforces_esp = function()
 	stop_loops = true
 	for _, c in ipairs(connections) do
 		c:Disconnect()
