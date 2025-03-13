@@ -761,12 +761,16 @@ cmds:new('fling', function()
         if rootpart then
             vel = rootpart.AssemblyLinearVelocity
             rootpart.AssemblyLinearVelocity = vel * 10000 + Vector3.new(0, 10000, 0)
-            runtime.RenderStepped:Wait()
-            rootpart.AssemblyLinearVelocity = vel
-            runtime.Stepped:Wait()
-            rootpart.AssemblyLinearVelocity = vel + Vector3.new(0, movel, 0)
-            movel = movel * -1
         end
+        runtime.RenderStepped:Wait()
+        if rootpart then
+            rootpart.AssemblyLinearVelocity = vel
+        end
+        runtime.Stepped:Wait()
+        if rootpart then
+            rootpart.AssemblyLinearVelocity = vel + Vector3.new(0, movel, 0)
+        end
+        movel = movel * -1
     until flinging == false
 end)
 
@@ -927,6 +931,9 @@ local function on_focused()
 end
 
 local function on_focus_lost(enter_pressed)
+    if tabbed_in then
+        return
+    end
     if enter_pressed then
         coroutine.resume(coroutine.create(cmds.execute), cmds, field.Text)
     end
