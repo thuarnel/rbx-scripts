@@ -761,6 +761,26 @@ cmds:new('unesp', function()
     end
 end)
 
+cmds:new('aimassist', function()
+    if not env.aim_assistant_loaded then
+        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-basic-esp.lua'))
+        if type(str) == 'string' then
+            local f = select(2, pcall(loadstring, str))
+            if type(f) == 'function' then
+                env.aim_assistant_loaded = true
+                coroutine.resume(coroutine.create(f))
+            end
+        end
+    end
+end)
+
+cmds:new('unaimassist', function()
+    if type(env.stop_aim_assistant) == 'function' then
+        env.stop_aim_assistant()
+        env.aim_assistant_loaded = false
+    end
+end)
+
 local phantomforces_loading = false
 
 cmds:new('phantomforces', function()

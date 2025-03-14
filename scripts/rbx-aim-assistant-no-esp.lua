@@ -46,7 +46,7 @@ local players = service("Players")
 local coregui = service("CoreGui")
 
 local ui = Instance.new("ScreenGui")
-ui.Name = "Aim Assistant [2.0.0]"
+ui.Name = "Aim Assistant Lite"
 ui.ResetOnSpawn = false
 ui.Enabled = true
 ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -109,7 +109,7 @@ ui_versionlabel.Name = "TextLabel"
 ui_versionlabel.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
 ui_versionlabel.TextColor3 = Color3.new(1, 1, 1)
 ui_versionlabel.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
-ui_versionlabel.Text = "[2.1.0]"
+ui_versionlabel.Text = "Lite"
 ui_versionlabel.BackgroundColor3 = Color3.new(1, 1, 1)
 ui_versionlabel.TextTransparency = 0.8
 ui_versionlabel.AnchorPoint = Vector2.new(1, 0)

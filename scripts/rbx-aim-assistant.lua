@@ -46,7 +46,7 @@ local players = service("Players")
 local coregui = service("CoreGui")
 
 local ui = Instance.new("ScreenGui")
-ui.Name = "Aim Assistant [2.0.0]"
+ui.Name = "Aim Assistant [2.1.0]"
 ui.ResetOnSpawn = false
 ui.Enabled = true
 ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
