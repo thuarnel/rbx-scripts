@@ -70,7 +70,7 @@ local function new_character(player, character)
             billboard.AlwaysOnTop = true
             billboard.Parent = coregui
             insert(instances, billboard)
-            billboards[billboard] = billboard
+            billboards[userid] = billboard
         end
 
         if not label then
@@ -92,46 +92,49 @@ local function new_character(player, character)
 
         local humanoid = character:FindFirstChildWhichIsA('Humanoid')
         local rootpart = humanoid and humanoid.RootPart
-
-        connect(runtime.Stepped, function(elapsed_time, delta_time)
-            if typeof(player) == 'Instance' and player.Team ~= localplayer.Team and typeof(rootpart) == 'Instance' and rootpart:IsA('BasePart') then
-                local _, on_screen = camera:WorldToScreenPoint(rootpart.Position)             
-
-                if on_screen then
-                    local target = mouse.Target
-                    local model = typeof(target) == 'Instance' and target:FindFirstAncestorWhichIsA('Model')
-                    local extents_size = character:GetExtentsSize()
-
-                    local top = camera:WorldToViewportPoint(rootpart.Position + Vector3.new(0, extents_size.Y / 2, 0))
-                    local bottom = camera:WorldToViewportPoint(rootpart.Position - Vector3.new(0, extents_size.Y / 2, 0))
-                    local left = camera:WorldToViewportPoint(rootpart.Position - Vector3.new(extents_size.X / 2, 0, 0))
-                    local right = camera:WorldToViewportPoint(rootpart.Position + Vector3.new(extents_size.X / 2, 0, 0))
+        local connection; connection = connect(runtime.Stepped, function(elapsed_time, delta_time)
+            if typeof(player) == 'Instance' then
+                if (player.Neutral or player.Team ~= localplayer.Team) and typeof(rootpart) == 'Instance' and rootpart:IsA('BasePart') then
+                    local _, on_screen = camera:WorldToScreenPoint(rootpart.Position)             
     
-                    local pixelHeight = math.abs(top.Y - bottom.Y)
-                    local pixelWidth = math.abs(right.X - left.X)
-                    
-                    billboard.Size = UDim2.fromOffset(pixelWidth, pixelHeight)
-
-                    if model == character then
-                        highlight.FillColor = green
-                        highlight.OutlineColor = green
-                        label.BorderColor3 = green
-                        label.TextStrokeColor3 = Color3.new(green.R / 2, green.G / 2, green.B / 2)
+                    if on_screen then
+                        local target = mouse.Target
+                        local model = typeof(target) == 'Instance' and target:FindFirstAncestorWhichIsA('Model')
+                        local extents_size = character:GetExtentsSize()
+    
+                        local top = camera:WorldToViewportPoint(rootpart.Position + Vector3.new(0, extents_size.Y / 2, 0))
+                        local bottom = camera:WorldToViewportPoint(rootpart.Position - Vector3.new(0, extents_size.Y / 2, 0))
+                        local left = camera:WorldToViewportPoint(rootpart.Position - Vector3.new(extents_size.X / 2, 0, 0))
+                        local right = camera:WorldToViewportPoint(rootpart.Position + Vector3.new(extents_size.X / 2, 0, 0))
+        
+                        local pixelHeight = math.abs(top.Y - bottom.Y)
+                        local pixelWidth = math.abs(right.X - left.X)
+                        
+                        billboard.Size = UDim2.fromOffset(pixelWidth, pixelHeight)
+    
+                        if model == character then
+                            highlight.FillColor = green
+                            highlight.OutlineColor = green
+                            label.BorderColor3 = green
+                            label.TextStrokeColor3 = Color3.new(green.R / 2, green.G / 2, green.B / 2)
+                        else
+                            highlight.FillColor = red
+                            highlight.OutlineColor = red
+                            label.BorderColor3 = red
+                            label.TextStrokeColor3 = Color3.new(red.R / 2, red.G / 2, red.B / 2)
+                        end
+    
+                        highlight.Enabled = true
+                        billboard.Enabled = true
+                        highlight.Adornee = character
+                        billboard.Adornee = character
                     else
-                        highlight.FillColor = red
-                        highlight.OutlineColor = red
-                        label.BorderColor3 = red
-                        label.TextStrokeColor3 = Color3.new(red.R / 2, red.G / 2, red.B / 2)
+                        highlight.Enabled = false
+                        billboard.Enabled = false
                     end
-
-                    highlight.Enabled = true
-                    billboard.Enabled = true
-                    highlight.Adornee = character
-                    billboard.Adornee = character
-                else
-                    highlight.Enabled = false
-                    billboard.Enabled = false
                 end
+            else
+                connection:Disconnect()
             end
         end)
     end
