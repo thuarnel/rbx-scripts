@@ -249,7 +249,7 @@ textBox_2.Parent = ui_fovcontroller
 local ui_ffacontroller = Instance.new("Frame")
 ui_ffacontroller.Name = "FFAController"
 ui_ffacontroller.BackgroundTransparency = 1
-ui_ffacontroller.Position = UDim2.new(0, 10, 0, 70)
+ui_ffacontroller.Position = UDim2.new(0, 10, 0, 40)
 ui_ffacontroller.BackgroundColor3 = Color3.new(1, 1, 1)
 ui_ffacontroller.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
 ui_ffacontroller.Size = UDim2.new(0, 20, 0, 20)
@@ -291,52 +291,6 @@ textLabel_7.BackgroundColor3 = Color3.new(1, 1, 1)
 textLabel_7.TextSize = 16
 textLabel_7.Size = UDim2.new(1, -5, 1, -5)
 textLabel_7.Parent = imageButton_2
-
-local ui_espcontroller = Instance.new("Frame")
-ui_espcontroller.Name = "ESPController"
-ui_espcontroller.BackgroundTransparency = 1
-ui_espcontroller.Position = UDim2.new(0, 10, 0, 40)
-ui_espcontroller.BackgroundColor3 = Color3.new(1, 1, 1)
-ui_espcontroller.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
-ui_espcontroller.Size = UDim2.new(0, 20, 0, 20)
-ui_espcontroller.Parent = ui_content
-
-local imageButton_3 = Instance.new("ImageButton")
-imageButton_3.Name = "ImageButton"
-imageButton_3.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-imageButton_3.ImageTransparency = 1
-imageButton_3.BorderColor3 = Color3.new(0.125, 0.125, 0.125)
-imageButton_3.BackgroundColor3 = Color3.new(0.157, 0.157, 0.157)
-imageButton_3.Size = UDim2.new(1, 0, 1, 0)
-imageButton_3.Parent = ui_espcontroller
-
-local textLabel_8 = Instance.new("TextLabel")
-textLabel_8.Name = "TextLabel"
-textLabel_8.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
-textLabel_8.TextColor3 = Color3.new(1, 1, 1)
-textLabel_8.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
-textLabel_8.Text = "✓"
-textLabel_8.AnchorPoint = Vector2.new(0.5, 0.5)
-textLabel_8.BackgroundTransparency = 1
-textLabel_8.Position = UDim2.new(0.5, 0, 0.5, 0)
-textLabel_8.BackgroundColor3 = Color3.new(1, 1, 1)
-textLabel_8.TextSize = 16
-textLabel_8.Size = UDim2.new(1, -5, 1, -5)
-textLabel_8.Parent = imageButton_3
-
-local textLabel_9 = Instance.new("TextLabel")
-textLabel_9.Name = "TextLabel"
-textLabel_9.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json")
-textLabel_9.TextColor3 = Color3.new(1, 1, 1)
-textLabel_9.Text = "ESP"
-textLabel_9.BackgroundColor3 = Color3.new(1, 1, 1)
-textLabel_9.BackgroundTransparency = 1
-textLabel_9.TextXAlignment = Enum.TextXAlignment.Left
-textLabel_9.BorderColor3 = Color3.new(0.106, 0.165, 0.208)
-textLabel_9.Position = UDim2.new(1, 5, 0, 0)
-textLabel_9.TextSize = 14
-textLabel_9.Size = UDim2.new(0, 100, 1, 0)
-textLabel_9.Parent = ui_espcontroller
 
 local ui_circle = Instance.new("Frame")
 ui_circle.Name = "Circle"
@@ -565,69 +519,10 @@ local function can_track(player, character)
     return player and player ~= localplayer and (ffa or player.Team ~= localplayer.Team)
 end
 
-local content = {}
-local highlight = {}
-highlight.__index = highlight
-
-function highlight.new(player)
-    if content[player] then
-        return content[player]
-    end
-    local self = setmetatable({}, highlight)
-    self.player = player
-    local highlight = Instance.new("Highlight")
-    highlight.Enabled = can_track(player)
-    highlight.FillColor = color_scheme['invalid']
-    highlight.OutlineColor = color_scheme['invalid']
-    insert(instances, highlight)
-    highlight.Parent = ui
-    connect(player.CharacterAdded, function(character)
-        self.character = character
-        highlight.Adornee = character
-        highlight.Enabled = can_track(player)
-    end)
-    if player.Character then
-        self.character = player.Character
-        highlight.Adornee = player.Character
-        highlight.Enabled = can_track(player)
-    end
-    connect(player:GetPropertyChangedSignal("Team"), function()
-        highlight.Enabled = can_track(player)
-    end)
-    self.highlight = highlight
-    content[player] = self
-    return self
-end
-
-function highlight:destroy()
-    self.highlight:Destroy()
-end
-
-function highlight:valid()
-    return can_track(self.player)
-end
-
-function highlight:color(color)
-    self.highlight.FillColor = color
-    self.highlight.OutlineColor = color
-end
-
-function highlight:enabled(enabled)
-    self.highlight.Enabled = enabled
-end
-
 local function get_enemy_players()
     local enemy_players = {}
     for _, potential_enemy in pairs(players:GetPlayers()) do
         if potential_enemy ~= localplayer then
-            if esp then
-                local local_entry = content[potential_enemy]
-                if not local_entry then
-                    highlight.new(potential_enemy)
-                    local_entry = content[potential_enemy]
-                end
-                local_entry:enabled(can_track(local_entry.player))
-            end
             if (ffa or potential_enemy.Team ~= localplayer.Team) then
                 insert(enemy_players, potential_enemy)
             end
@@ -653,21 +548,12 @@ local function get_nearest_character(current_target)
     local closest_distance = max_detection_range
     local camera_position = currentcamera.CFrame.Position
     for _, character in pairs(get_enemy_characters()) do
-        local local_entry
-        local local_color_selection = color_scheme['invalid']
-        for _, entry in pairs(content) do
-            if entry.character == character then
-                local_entry = entry
-                break
-            end
-        end
         local head = rbxchild(character, 'Head') or rbxchild(character, 'HumanoidRootPart')
         if typeof(head) == 'Instance' and rbxclass(head, 'BasePart') then
             local screen_position, on_screen = currentcamera:WorldToScreenPoint(head.Position)
             local screen_distance = (v2(playermouse.X, playermouse.Y) - v2(screen_position.X, screen_position.Y))
                 .Magnitude
             if on_screen then
-				local_entry:enabled(can_track(local_entry.player))
                 local hit = raycast(
                     workspace,
                     ray(camera_position, (head.Position - camera_position).Unit * 2048),
@@ -678,15 +564,9 @@ local function get_nearest_character(current_target)
                         nearest_character = character
                         nearest_screenpoint = screen_position
                         closest_distance = screen_distance
-                        local_color_selection = color_scheme['valid']
                     end
                 end
-            else
-                local_entry:enabled(false)
             end
-        end
-        if current_target ~= nearest_character then
-            local_entry:color(local_color_selection)
         end
     end
     return nearest_character, nearest_screenpoint
@@ -747,28 +627,6 @@ coroutine.resume(coroutine.create(function(dragging, drag_input, drag_start, sta
     end)
 end))
 
-local function load_player(player)
-    if player ~= localplayer then
-        highlight.new(player)
-    end
-end
-
-for _, player in pairs(players:GetPlayers()) do
-    load_player(player)
-end
-
-connect(players.PlayerAdded, load_player)
-
-connect(players.PlayerRemoving, function(player)
-    if player ~= localplayer then
-        local entry = content[player]
-        if entry then
-            entry:destroy()
-            content[player] = nil
-        end
-    end
-end)
-
 local function update_mouse()
     if currentcamera then
         local viewport_size = currentcamera.ViewportSize * 2
@@ -783,7 +641,6 @@ connect(userinputservice:GetPropertyChangedSignal("MouseBehavior"), update_mouse
 
 local current_target
 
-local nearest_player
 local nearest_character
 local nearest_screenpoint
 
@@ -804,36 +661,16 @@ end
 local toggle_ffa = function()
     ffa = not ffa
     ui_ffacontroller.ImageButton.TextLabel.Text = ffa and '✓' or ''
-    if esp then
-        for _, entry in pairs(content) do
-            entry:enabled(can_track(entry.player))
-        end
-    end
-end
-
-local toggle_esp = function()
-    esp = not esp
-    ui_espcontroller.ImageButton.TextLabel.Text = esp and '✓' or ''
-    for _, entry in pairs(content) do
-        entry:enabled(can_track(entry.player))
-    end
 end
 
 connect(rbxchildwait(ui_ffacontroller, 'ImageButton').MouseButton1Up, function() toggle_ffa() end)
-connect(rbxchildwait(ui_espcontroller, 'ImageButton').MouseButton1Up, function() toggle_esp() end)
 connect(rbxchildwait(ui_aimcontroller, 'ImageButton').MouseButton1Up, function() toggle_aimbot() end)
 
 local function on_lock_update(time, delta_time)
-    current_target = nearest_character
-    nearest_character, nearest_screenpoint = get_nearest_character(current_target)
-    if aimbot and (mousebutton1down or mousebutton2down) and nearest_character and (time > last_time + frame_delta or delta_time > frame_delta) then
+    if aimbot and (mousebutton1down or mousebutton2down) and (time > last_time + frame_delta or delta_time > frame_delta) then
         last_time = time
-        if esp then
-            nearest_player = players:GetPlayerFromCharacter(nearest_character)
-            if nearest_player then
-                content[nearest_player]:color(color_scheme['nearest'])
-            end
-        end
+        current_target = nearest_character
+        nearest_character, nearest_screenpoint = get_nearest_character(current_target)
         if typeof(nearest_screenpoint) == 'Vector3' then
             mousemoverel((nearest_screenpoint.X - playermouse.X) * sens, (nearest_screenpoint.Y - playermouse.Y) * sens)
             ui_circle.Position = UDim2.fromOffset(nearest_screenpoint.X, nearest_screenpoint.Y)
@@ -855,12 +692,6 @@ env.stop_aim_assistant = function()
             pcall(instance.Destroy, instance)
         end
     end
-    for _, entry in pairs(content) do
-        if type(entry) == 'table' then
-            pcall(entry.destroy, entry)
-        end
-    end
-    content = nil
     connections = nil
     instances = nil
 end

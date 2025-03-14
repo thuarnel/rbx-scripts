@@ -721,12 +721,12 @@ local esp_variations = {
     end,
     
     basic = function()
-        if not env.basic_esp_loaded then
+        if not env.thuarnel_basic_esp_loaded then
             local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-basic-esp.lua'))
             if type(str) == 'string' then
                 local f = select(2, pcall(loadstring, str))
                 if type(f) == 'function' then
-                    env.basic_esp_loaded = true
+                    env.thuarnel_basic_esp_loaded = true
                     coroutine.resume(coroutine.create(f))
                 end
             end
@@ -755,9 +755,9 @@ cmds:new('unesp', function()
     if type(env.stop_beampacker_esp) == 'function' then
         env.stop_beampacker_esp()
         env.beampacker_esp_loaded = false
-    elseif type(env.stop_basic_esp) == 'function' then
-        env.stop_basic_esp()
-        env.basic_esp_loaded = false
+    elseif type(env.stop_thuarnel_basic_esp) == 'function' then
+        env.stop_thuarnel_basic_esp()
+        env.thuarnel_basic_esp_loaded = false
     end
 end)
 
