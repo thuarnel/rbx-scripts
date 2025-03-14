@@ -15,6 +15,7 @@ end
 
 local mousemoverel = env.mousemoverel
 local insert = table.insert
+local concat = table.concat
 
 local players = game:GetService('Players');
 local coregui = game:GetService('CoreGui');
@@ -733,6 +734,12 @@ local esp_variations = {
     end
 }
 
+local esp_types = {}
+
+for t in pairs(esp_variations) do
+    insert(esp_types, t)
+end
+
 cmds:new('esp', function(esp_type)
     if not type(esp_type) == 'string' then
         esp_type = 'basic'
@@ -740,7 +747,7 @@ cmds:new('esp', function(esp_type)
     if type(esp_variations[esp_type]) == 'function' then
         esp_variations[esp_type]()
     else
-        send_notification('Invalid ESP Type', 'Type(s): ')
+        send_notification('Invalid ESP Type', 'Type(s): ' .. concat(esp_types, ', '))
     end
 end)
 
@@ -753,7 +760,6 @@ cmds:new('unesp', function()
         env.basic_esp_loaded = false
     end
 end)
-
 
 local phantomforces_loading = false
 
