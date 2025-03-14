@@ -672,8 +672,8 @@ local function on_lock_update(time, delta_time)
         current_target = nearest_character
         nearest_character, nearest_screenpoint = get_nearest_character(current_target)
         if typeof(nearest_screenpoint) == 'Vector3' then
-            mousemoverel((nearest_screenpoint.X - playermouse.X) * sens, (nearest_screenpoint.Y - playermouse.Y) * sens)
             ui_circle.Position = UDim2.fromOffset(nearest_screenpoint.X, nearest_screenpoint.Y)
+            mousemoverel((nearest_screenpoint.X - playermouse.X) * sens, (nearest_screenpoint.Y - playermouse.Y) * sens)
         end
     end
 end
