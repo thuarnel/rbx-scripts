@@ -183,11 +183,8 @@ connect(runtime.RenderStepped, function()
 					local rayOrigin = root.Position + Vector3.new(0, 3, 0)
 					local rayDirection = Vector3.new(0, -6, 0)
 					local raycastParams = RaycastParams.new()
-					raycastParams.FilterDescendantsInstances = {
-						workspace.Map,
-						workspace.Map.MapParts
-					}
-					raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+					raycastParams.FilterDescendantsInstances = { workspace:FindFirstChild('Map') }
+					raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 					local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
 					if result then
 						local hitPart = result.Instance
