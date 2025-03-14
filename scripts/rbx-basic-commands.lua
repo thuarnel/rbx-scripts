@@ -708,7 +708,7 @@ end)
 local esp_variations = {
     beampacker = function()
         if not env.beampacker_esp_loaded then
-            local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-esp.lua'))
+            local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-beampacker-esp.lua'))
             if type(str) == 'string' then
                 local f = select(2, pcall(loadstring, str))
                 if type(f) == 'function' then
@@ -720,7 +720,16 @@ local esp_variations = {
     end,
     
     basic = function()
-
+        if not env.basic_esp_loaded then
+            local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-basic-esp.lua'))
+            if type(str) == 'string' then
+                local f = select(2, pcall(loadstring, str))
+                if type(f) == 'function' then
+                    env.basic_esp_loaded = true
+                    coroutine.resume(coroutine.create(f))
+                end
+            end
+        end
     end
 }
 
@@ -739,6 +748,9 @@ cmds:new('unesp', function()
     if type(env.stop_beampacker_esp) == 'function' then
         env.stop_beampacker_esp()
         env.beampacker_esp_loaded = false
+    elseif type(env.stop_basic_esp) == 'function' then
+        env.stop_basic_esp()
+        env.basic_esp_loaded = false
     end
 end)
 
