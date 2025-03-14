@@ -29,9 +29,10 @@ end
 
 --[=[ BEGIN SCRIPT ]=]--
 
-local coregui = game:GetService('CoreGui');
-local runtime = game:GetService('RunService');
-local roots = workspace.Roots
+local coregui = game:GetService('CoreGui')
+local runtime = game:GetService('RunService')
+
+local roots = workspace:FindFirstChild('Roots')
 local stop_loops = false
 local camera = workspace.CurrentCamera
 local spawn = task.spawn
@@ -74,10 +75,7 @@ cameraPart.Parent = workspace
 table.insert(instances, cameraPart)
 
 local rayParams = RaycastParams.new()
-rayParams.FilterDescendantsInstances = {
-	roots,
-	camera
-}
+rayParams.FilterDescendantsInstances = { roots, camera }
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
 local function isRootVisible(root)
@@ -94,7 +92,6 @@ local function isRootBlocked(root)
 	local rayResult = workspace:Raycast(camera.CFrame.Position, direction, rayParams)
 	return rayResult ~= nil
 end
-
 
 local ghosts = Color3.fromRGB(231, 183, 88)
 local phantoms = Color3.fromRGB(155, 182, 255)
@@ -155,8 +152,6 @@ connect(runtime.RenderStepped, function()
 					myTeam = 'phantoms'
 				end
 			end
-		else
-			arrow_img.Visible = false
 		end
 	
 		local closestRoot = nil
@@ -267,7 +262,7 @@ connect(runtime.RenderStepped, function()
 			end
 		end
 	
-		if closestRoot then
+		if type(myTeam) == 'string' and typeof(closestRoot) == 'Instance' and closestRoot:IsA('BasePart') then
 			local rootPosition = closestRoot.Position
 			local flatCFrame = CFrame.lookAt(myPosition, myPosition + camera.CFrame.LookVector * Vector3.new(1, 0, 1))
 			local travel = flatCFrame:Inverse() * rootPosition
