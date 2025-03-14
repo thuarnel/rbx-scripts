@@ -18,6 +18,7 @@ local insert = table.insert
 
 local players = game:GetService('Players');
 local coregui = game:GetService('CoreGui');
+local repstore = game:GetService('ReplicatedStorage')
 local runtime = game:GetService('RunService');
 local lighting = game:GetService('Lighting');
 local tpservice = game:GetService('TeleportService');
@@ -528,6 +529,20 @@ cmds:new('to', function(target)
     end
 end)
 
+cmds:new('ws', function(ws)
+    local ws = tonumber(ws)
+    if type(ws) == 'number' and humanoid then
+        humanoid.WalkSpeed = ws
+    end
+end)
+
+cmds:new('jp', function(jp)
+    local jp = tonumber(jp)
+    if type(jp) == 'number' and humanoid then
+        humanoid.JumpPower = jp
+    end
+end)
+
 cmds:new('back', function()
     if rootpart and typeof(back_pos) == 'Vector3' then
         break_circle()
@@ -642,7 +657,15 @@ cmds:new('annabypasser', function()
             local f = select(2, pcall(loadstring, str))
             if type(f) == 'function' then
                 env.anna_bypasser_loaded = true
+                local events = repstore:FindFirstChild('DefaultChatSystemChatEvents')
+                if events then
+                    events.Parent = nil -- L watermark
+                end
                 coroutine.resume(coroutine.create(f))
+                task.wait(3)
+                if events then
+                    events.Parent = repstore
+                end
             end
         end
     else
@@ -784,6 +807,7 @@ cmds:new('fix', function()
         while not game:IsLoaded() do
             task.wait(0)
         end
+        lighting.Brightness = 2
         lighting.ExposureCompensation = 0
         for _, v in pairs(workspace:GetDescendants()) do
             if v:IsA('Light') then
