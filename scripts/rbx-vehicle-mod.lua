@@ -16,9 +16,11 @@ local connections = {}
 local break_all_loops = false
 
 local function connect(signal, callback)
-    local connection = signal:Connect(callback)
-    table.insert(connections, connection)
-    return connection
+    if typeof(signal) == 'RBXScriptSignal' then
+        local connection = signal:Connect(callback)
+        table.insert(connections, connection)
+        return connection
+    end
 end
 
 --[=[ START SCRIPT ]=]--

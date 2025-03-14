@@ -241,9 +241,18 @@ end
 
 local cmds = { list = {} }
 
-function cmds:new(title, callback)
-    local list = self.list
-    list[title] = callback
+function cmds:new(commandNames, callback)
+    if type(commandNames) == "table" then
+        -- primary
+        local primary = commandNames[1]
+        self.list[primary] = callback
+        -- aliases
+        for i = 2, #commandNames do
+            self.list[commandNames[i]] = callback
+        end
+    else
+        self.list[commandNames] = callback
+    end
 end
 
 function cmds:execute(str)
@@ -529,14 +538,14 @@ cmds:new('to', function(target)
     end
 end)
 
-cmds:new('ws', function(ws)
+cmds:new({'ws', 'walkspeed'}, function(ws)
     local ws = tonumber(ws)
     if type(ws) == 'number' and humanoid then
         humanoid.WalkSpeed = ws
     end
 end)
 
-cmds:new('jp', function(jp)
+cmds:new({'jp', 'jumppower'}, function(jp)
     local jp = tonumber(jp)
     if type(jp) == 'number' and humanoid then
         humanoid.JumpPower = jp
@@ -695,24 +704,42 @@ cmds:new('annabypassertweaks', function()
     end
 end)
 
-cmds:new('esp', function()
-    if not env.beampacker_esp_loaded then
-        local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-esp.lua'))
-        if type(str) == 'string' then
-            local f = select(2, pcall(loadstring, str))
-            if type(f) == 'function' then
-                env.beampacker_esp_loaded = true
-                coroutine.resume(coroutine.create(f))
+--- if you're going to add a new type, be sure you add a way to unload it
+local esp_variations = {
+    beampacker = function()
+        if not env.beampacker_esp_loaded then
+            local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-esp.lua'))
+            if type(str) == 'string' then
+                local f = select(2, pcall(loadstring, str))
+                if type(f) == 'function' then
+                    env.beampacker_esp_loaded = true
+                    coroutine.resume(coroutine.create(f))
+                end
             end
         end
+    end,
+    
+    basic = function()
+
+    end
+}
+
+cmds:new('esp', function(esp_type)
+    if not type(esp_type) == 'string' then
+        esp_type = 'basic'
+    end
+    if type(esp_variations[esp_type]) == 'function' then
+        esp_variations[esp_type]()
+    else
+        send_notification('Invalid ESP Type', 'Type(s): ')
     end
 end)
 
 cmds:new('unesp', function()
     if type(env.stop_beampacker_esp) == 'function' then
-        env.stop_beampacker_esp() 
+        env.stop_beampacker_esp()
+        env.beampacker_esp_loaded = false
     end
-    env.beampacker_esp_loaded = false
 end)
 
 
