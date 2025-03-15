@@ -1,16 +1,30 @@
 --[=[
-    thuarnel
+	Script created by thuarnel
+
     rbx-basic-esp
     3/14/2025
-]=]--
+
+	Features:
+        - General ESP
+        - Phantom Forces support
+        - Open Source! (You're welcome)
+
+	Contact:
+		- Discord: thuarnel
+		- Discord Server: https://discord.gg/wat
+]=]
 
 local RunService = game:GetService('RunService')
 local env = RunService:IsStudio() and {} or (type(getgenv) == 'function' and getgenv())
 
 if type(env) == 'table' and type(env.stop_thuarnel_basic_esp) == 'function' then
+    -- print('[BE]: ❌ Stopping previous instance of thuarnel\'s Basic ESP...')
 	env.stop_thuarnel_basic_esp()
 end
 
+-- print('[BE]: Starting new instance of thuarnel\'s Basic ESP...')
+
+local breakloops: boolean = false
 local instances: { [number]: Instance } = {}
 local connections: { [number]: RBXScriptConnection } = {}
 
@@ -46,33 +60,60 @@ local mouse = localplayer:GetMouse()
 local assignees = {}
 local assigned = {}
 
+local currentcamera = workspace.CurrentCamera
+
+connect(workspace:GetPropertyChangedSignal('CurrentCamera'), function()
+    currentcamera = workspace.CurrentCamera
+end)
+
 local esp = {}
 esp.__index = esp
 
 local function is_position_on_viewport(position: Vector3)
-    local currentcamera = workspace.CurrentCamera
-    if typeof(currentcamera) == 'Instance' and currentcamera:IsA('Camera') and typeof(position) == 'Vector3' then
-	    local _, onScreen = currentcamera:WorldToViewportPoint(position)
-	    return onScreen
-    end
-    return false
-end
-
-local function is_position_visible(position: Vector3, parameters: RaycastParams?)
-    if not is_position_on_viewport(position) then
+    if not currentcamera then
+        warn("Camera is nil")
         return false
     end
-    local currentcamera = workspace.CurrentCamera
-    if typeof(currentcamera) == 'Instance' and currentcamera:IsA('Camera') and typeof(position) == 'Vector3' then
-	    local direction = (position - currentcamera.CFrame.Position).Unit * (position - currentcamera.CFrame.Position).Magnitude
-	    local raycast_result = workspace:Raycast(currentcamera.CFrame.Position, direction, parameters)
-	    return type(raycast_result) == 'table' and typeof(raycast_result.Instance) == 'Instance'
+
+    local screenPosition, onScreen = currentcamera:WorldToViewportPoint(position)
+    local viewportSize = currentcamera.ViewportSize
+    local x, y = screenPosition.X, screenPosition.Y
+    local isWithinBounds = x >= 0 and x <= viewportSize.X and y >= 0 and y <= viewportSize.Y
+
+    return onScreen and isWithinBounds
+end
+
+local default_parameters = RaycastParams.new()
+default_parameters.FilterDescendantsInstances = { currentcamera }
+default_parameters.FilterType = Enum.RaycastFilterType.Exclude
+default_parameters.IgnoreWater = true
+
+local function is_position_obstructed(position: Vector3, parameters: RaycastParams, ...)
+    if not currentcamera then return false end
+
+    local newFilter = parameters.FilterDescendantsInstances and {unpack(parameters.FilterDescendantsInstances)} or {}
+
+    for _, v in pairs({...}) do
+        if typeof(v) == 'Instance' then
+            table.insert(newFilter, v)
+        end
     end
+
+    local newParams = RaycastParams.new()
+    newParams.FilterDescendantsInstances = newFilter
+    newParams.FilterType = parameters.FilterType
+    newParams.IgnoreWater = parameters.IgnoreWater
+
+    if is_position_on_viewport(position) then
+        local direction = (position - currentcamera.CFrame.Position)
+        local raycast_result = workspace:Raycast(currentcamera.CFrame.Position, direction, newParams)
+        return raycast_result ~= nil
+    end
+
     return false
 end
 
-local currentcamera, sleeves = workspace.CurrentCamera, nil
-
+local sleeves = nil
 local ghosts = Color3.fromRGB(231, 183, 88)
 local phantoms = Color3.fromRGB(155, 182, 255)
 
@@ -87,18 +128,16 @@ local suit_phantoms = {
 }
 
 workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function(...: any)
+    if not find(default_parameters.FilterDescendantsInstances, currentcamera) then
+        insert(default_parameters.FilterDescendantsInstances, currentcamera)
+    end
     currentcamera = workspace.CurrentCamera
 end)
-
-local default_parameters = RaycastParams.new()
-default_parameters.FilterDescendantsInstances = { (is_phantom_forces and workspace:FindFirstChild('Map')) or nil }
-default_parameters.FilterType = Enum.RaycastFilterType.Exclude
-default_parameters.IgnoreWater = true
 
 local function is_target_character(target, esp)
     if typeof(target) == 'Instance' then
         return 
-            (typeof(esp.character) == 'Instance' and target == esp.character or target:IsDescendantOf(esp.character)) or
+            (typeof(esp.character) == 'Instance' and (target == esp.character or target:IsDescendantOf(esp.character))) or
             (typeof(esp.rootpart) == 'Instance' and target == esp.rootpart)
     end
     return false
@@ -106,6 +145,10 @@ end
 
 local function visibility_check(self, highlight: Highlight?, billboard: BillboardGui?, label: TextLabel?) 
     while true do
+        if breakloops then
+            break
+        end
+
         local player, character, rootpart = self:getassignment()
         local name = (player and player.Name) or self.uniqueid
 
@@ -167,10 +210,17 @@ local function visibility_check(self, highlight: Highlight?, billboard: Billboar
             end
 
             is_friendly = my_team and my_team == their_team
+        elseif not is_phantom_forces and typeof(player) == 'Instance' and player:IsA('Player') then
+            local my_team = localplayer.Team
+            local their_team = player.Team
+            
+            if typeof(my_team) == 'Instance' and my_team == their_team then
+                is_friendly = false
+            end
         end
 
         if highlight and label then
-            if is_position_visible(rootpart, default_parameters) then
+            if rootpart and not is_position_obstructed(rootpart.Position, default_parameters, rootpart, character) then
                 local tgt = mouse.Target
                 if typeof(tgt) == 'Instance' and is_target_character(tgt, esp) then
                     highlight.FillColor = blue
@@ -205,7 +255,7 @@ local function visibility_check(self, highlight: Highlight?, billboard: Billboar
             label.Text = name
         end
 
-        RunService.Stepped:Wait()
+        task.wait(0.5)
     end
 end
 
@@ -255,11 +305,17 @@ function esp.new()
                 label.Parent = billboard
                 insert(self.objects, billboard)
 
-                coroutine.resume(coroutine.create(visibility_check), self, highlight, billboard, label)
+                self.thread = coroutine.create(visibility_check)
+                coroutine.resume(self.thread, self, highlight, billboard, label)
+            end
+        elseif situation == 'removed' then
+            if type(self.thread) == 'thread' then
+                coroutine.close(self.thread)
             end
         end
     end)
     self.event = event :: BindableEvent
+    insert(instances, event)
     return self
 end
 
@@ -289,6 +345,9 @@ end
 
 -- Helper to check if a player is already assigned an ESP instance
 local function isPlayerAssigned(player: Player): boolean
+    if player == localplayer then
+        return true
+    end
     for _, espInstance in ipairs(assigned) do
         if espInstance.player == player then
             return true
@@ -312,7 +371,9 @@ end
 
 local roots = is_phantom_forces and workspace:WaitForChild('Roots', 5)
 
-connect(RunService.Stepped, function(elapsed_time: number, delta_time: number)
+local lastUpdate = 0
+connect(RunService.Stepped, function()
+    if tick() - lastUpdate < 0.2 then return end
     if is_phantom_forces and typeof(roots) == 'Instance' then
         for _, rootpart in pairs(roots:GetChildren()) do
             if not isRootAssigned(rootpart) then
@@ -373,15 +434,45 @@ connect(RunService.Stepped, function(elapsed_time: number, delta_time: number)
     end
 end)
 
+-- print('[BE]: ✅ Started new instance of thuarnel\'s Basic ESP!')
+
 env.stop_thuarnel_basic_esp = function()
-	for _, connection: RBXScriptConnection? in pairs(connections) do
-		if typeof(connection) == 'RBXScriptConnection' and connection.Connected then
-			connection:Disconnect()
-		end
-	end
-	for _, instance: Instance? in pairs(instances) do
-		if typeof(instance) == 'Instance' then
-			instance:Destroy()
-		end
-	end
+    breakloops = true
+    
+    for _, connection: RBXScriptConnection? in pairs(connections) do
+        if typeof(connection) == 'RBXScriptConnection' and connection.Connected then
+            connection:Disconnect()
+        end
+    end
+
+    for _, instance: Instance? in pairs(instances) do
+        if typeof(instance) == 'Instance' then
+            instance:Destroy()
+        end
+    end
+
+    instances = {}
+    connections = {}
+
+    for _, espInstance in pairs(assigned) do
+        if espInstance and typeof(espInstance) == 'table' then
+            espInstance.player = nil
+            espInstance.character = nil
+            espInstance.rootpart = nil
+            espInstance.objects = {}
+            espInstance.event:Fire('removed')
+
+            for _, object in pairs(espInstance.objects) do
+                if typeof(object) == 'Instance' then
+                    object:Destroy()
+                end
+            end
+
+            espInstance.objects = {}
+        end
+    end
+
+    assigned = {}
+    assignees = {}
+    sleeves = nil
 end

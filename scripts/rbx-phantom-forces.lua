@@ -1,14 +1,7 @@
 --[=[
 	Script created by thuarnel
 
-	Features:
-		- Root ESP
-		- Team Check
-		- Wall Check
-
-	Contact:
-		- Discord: thuarnel
-		- Discord Server: https://discord.gg/wat
+	USE BASIC ESP INSTEAD:
 ]=]
 
 --- @diagnostic disable: undefined-global
