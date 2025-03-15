@@ -53,6 +53,7 @@ insert(instances, ScreenGui)
 ScreenGui.Parent = CoreGui
 
 local is_phantom_forces = game.PlaceId == 292439477
+
 local red, green, blue = Color3.fromRGB(255, 37, 40), Color3.fromRGB(38, 255, 99), Color3.fromRGB(0, 172, 255)
 local localplayer = Players.LocalPlayer
 local mouse = localplayer:GetMouse()
@@ -338,12 +339,10 @@ function esp:assign(value: Instance)
     return self.player, self.character
 end
 
--- getassignment now just returns what was stored
 function esp:getassignment(): (Player?, Model?, BasePart?)
     return self.player, self.character, self.rootpart
 end
 
--- Helper to check if a player is already assigned an ESP instance
 local function isPlayerAssigned(player: Player): boolean
     if player == localplayer then
         return true

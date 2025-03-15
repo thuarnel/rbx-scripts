@@ -2,6 +2,7 @@
 	Script created by thuarnel
 
 	USE BASIC ESP INSTEAD:
+		loadstring(game:HttpGet('https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-basic-esp.lua'))()
 ]=]
 
 --- @diagnostic disable: undefined-global
