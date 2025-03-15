@@ -139,7 +139,7 @@ connect(runtime.RenderStepped, function()
         last_time = current_time
 
 		if typeof(sleeves) ~= 'Instance' or not sleeves:IsDescendantOf(camera) then
-			sleeves = camera:FindFirstChild('cSleeves', true)
+			sleeves = camera:FindFirstChild('Sleeves', true)
 		end
 	
 		local myTeam

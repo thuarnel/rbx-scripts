@@ -38,7 +38,7 @@ ScreenGui.ResetOnSpawn = false
 insert(instances, ScreenGui)
 ScreenGui.Parent = CoreGui
 
--- local is_phantom_forces = game.PlaceId == 292439477
+local is_phantom_forces = game.PlaceId == 292439477
 local red, green, blue = Color3.fromRGB(255, 37, 40), Color3.fromRGB(38, 255, 99), Color3.fromRGB(0, 172, 255)
 local localplayer = Players.LocalPlayer
 local mouse = localplayer:GetMouse()
@@ -58,62 +58,151 @@ local function is_position_on_viewport(position: Vector3)
     return false
 end
 
-local function is_position_obstructed(position: Vector3, parameters: RaycastParams?)
+local function is_position_visible(position: Vector3, parameters: RaycastParams?)
     if not is_position_on_viewport(position) then
         return false
     end
     local currentcamera = workspace.CurrentCamera
     if typeof(currentcamera) == 'Instance' and currentcamera:IsA('Camera') and typeof(position) == 'Vector3' then
 	    local direction = (position - currentcamera.CFrame.Position).Unit * (position - currentcamera.CFrame.Position).Magnitude
-	    local rayResult = workspace:Raycast(currentcamera.CFrame.Position, direction, parameters)
-	    return rayResult ~= nil
+	    local raycast_result = workspace:Raycast(currentcamera.CFrame.Position, direction, parameters)
+	    return type(raycast_result) == 'table' and typeof(raycast_result.Instance) == 'Instance'
+    end
+    return false
+end
+
+local currentcamera, sleeves = workspace.CurrentCamera, nil
+
+local ghosts = Color3.fromRGB(231, 183, 88)
+local phantoms = Color3.fromRGB(155, 182, 255)
+
+local suit_ghosts = {
+	['rbxassetid://5558971297'] = true,
+	['rbxassetid://5614184140'] = true
+}
+
+local suit_phantoms = {
+	['rbxassetid://5614184106'] = true,
+	['rbxassetid://5558971356'] = true
+}
+
+workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function(...: any)
+    currentcamera = workspace.CurrentCamera
+end)
+
+local default_parameters = RaycastParams.new()
+default_parameters.FilterDescendantsInstances = { (is_phantom_forces and workspace:FindFirstChild('Map')) or nil }
+default_parameters.FilterType = Enum.RaycastFilterType.Exclude
+default_parameters.IgnoreWater = true
+
+local function is_target_character(target, esp)
+    if typeof(target) == 'Instance' then
+        return 
+            (typeof(esp.character) == 'Instance' and target == esp.character or target:IsDescendantOf(esp.character)) or
+            (typeof(esp.rootpart) == 'Instance' and target == esp.rootpart)
     end
     return false
 end
 
 local function visibility_check(self, highlight: Highlight?, billboard: BillboardGui?, label: TextLabel?) 
     while true do
-        local player: Player?, character: Model? = self:getassignment()
-        if not player and not character then
-            break
-        end
-
+        local player, character, rootpart = self:getassignment()
         local name = (player and player.Name) or self.uniqueid
 
-        if character then
+        if not is_phantom_forces and character and not rootpart then
             local humanoid = character:FindFirstChildWhichIsA('Humanoid')
-            local rootpart = humanoid and humanoid.RootPart or character:FindFirstChild('HumanoidRootPart')
+            rootpart = humanoid and humanoid.RootPart or character:FindFirstChild('HumanoidRootPart')
+            self.rootpart = rootpart
+        elseif is_phantom_forces and rootpart and (not character or not character:IsDescendantOf(workspace)) then
+            if typeof(sleeves) ~= 'Instance' or not sleeves:IsDescendantOf(currentcamera) then
+                sleeves = currentcamera:FindFirstChild('Sleeves', true)
+            end
 
-            if highlight and label then
-                if not is_position_obstructed(rootpart) then
-                    if typeof(mouse.Target) == 'Instance' and mouse.Target:IsDescendantOf(character) then
-                        highlight.FillColor = blue
-                        highlight.OutlineColor = blue
-                        label.BorderColor3 = blue
-                        label.TextStrokeColor3 = Color3.new(blue.R / 2, blue.G / 2, blue.B / 2)
-                    else
-                        highlight.FillColor = green
-                        highlight.OutlineColor = green
-                        label.BorderColor3 = green
-                        label.TextStrokeColor3 = Color3.new(green.R / 2, green.G / 2, green.B / 2)
+            if (not character or not character:IsDescendantOf(workspace)) then
+                local rayOrigin = rootpart.Position + Vector3.new(0, 3, 0)
+                local rayDirection = Vector3.new(0, -6, 0)
+                
+                local raycastParams = RaycastParams.new()
+                raycastParams.FilterDescendantsInstances = { workspace:FindFirstChild('Map') }
+                raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+                local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+                
+                if result then
+                    local hitPart = result.Instance
+                    local hitModel = hitPart:FindFirstAncestorWhichIsA('Model')
+                    local hitFolder = hitPart:FindFirstAncestorWhichIsA('Folder')
+                    if hitFolder and hitModel then
+                        character = hitModel
+                        self.character = character
                     end
-                else
-                    highlight.FillColor = red
-                    highlight.OutlineColor = red
-                    label.BorderColor3 = red
-                    label.TextStrokeColor3 = Color3.new(red.R / 2, red.G / 2, red.B / 2)
+                end
+            end
+        end
+
+        local is_friendly = false
+
+        if is_phantom_forces and character then
+            local my_team, their_team
+            
+            if sleeves then
+                local texture = sleeves:FindFirstChildWhichIsA('Texture', true)
+                if texture and texture:IsA('Texture') then
+                    if texture.Color3 == ghosts then
+                        my_team = 'ghosts'
+                    elseif texture.Color3 == phantoms then
+                        my_team = 'phantoms'
+                    end
+                end
+            end
+            
+			if character then
+				local texture = character:FindFirstChildWhichIsA('Texture', true)
+				if texture then
+					if suit_ghosts[texture.Texture] then
+						their_team = 'ghosts'
+					elseif suit_phantoms[texture.Texture] then
+						their_team = 'phantoms'
+					end
                 end
             end
 
-            if highlight then
-                highlight.Adornee = character
+            is_friendly = my_team and my_team == their_team
+        end
+
+        if highlight and label then
+            if is_position_visible(rootpart, default_parameters) then
+                local tgt = mouse.Target
+                if typeof(tgt) == 'Instance' and is_target_character(tgt, esp) then
+                    highlight.FillColor = blue
+                    highlight.OutlineColor = blue
+                    label.BorderColor3 = blue
+                    label.TextStrokeColor3 = Color3.new(blue.R / 2, blue.G / 2, blue.B / 2)
+                else
+                    highlight.FillColor = green
+                    highlight.OutlineColor = green
+                    label.BorderColor3 = green
+                    label.TextStrokeColor3 = Color3.new(green.R / 2, green.G / 2, green.B / 2)
+                end
+            else
+                highlight.FillColor = red
+                highlight.OutlineColor = red
+                label.BorderColor3 = red
+                label.TextStrokeColor3 = Color3.new(red.R / 2, red.G / 2, red.B / 2)
             end
-            if billboard then
-                billboard.Adornee = character
-            end
-            if label then
-                label.Text = name
-            end
+        end
+
+        if highlight then
+            highlight.Enabled = not is_friendly
+            highlight.Adornee = character or rootpart
+        end
+
+        if billboard then
+            billboard.Enabled = not is_friendly
+            billboard.Adornee = character or rootpart
+        end
+
+        if label then
+            label.Text = name
         end
 
         RunService.Stepped:Wait()
@@ -124,23 +213,23 @@ function esp.new()
     local self = setmetatable({}, esp)
     self.player = nil :: Player?
     self.character = nil :: Model?
+    self.rootpart = nil :: BasePart?
     self.objects = {} :: { [number]: Instance }
-    self.uniqueid = HttpService:GenerateGUID(false) :: string
+    self.uniqueid = HttpService:GenerateGUID(false):sub(1, 10) :: string
     local event = Instance.new('BindableEvent')
     event.Name = 'Changed'
     event.Parent = ScreenGui
     connect(event.Event, function(situation)
-        -- Destroy previous ESP objects
         for _, object in pairs(self.objects) do
             if typeof(object) == 'Instance' then
                 object:Destroy()
             end
         end
-        self.objects = {}  -- clear out the table
+        self.objects = {}
 
         if situation == 'assigned' then
-            local player, character = self:getassignment()
-            if typeof(player) == 'Instance' and player:IsA('Player') and typeof(character) == 'Instance' and character:IsA('Model') then
+            local player, character, rootpart = self:getassignment()
+            if (player and character) or rootpart then
                 local highlight = Instance.new('Highlight', ScreenGui)
                 highlight.Name = 'thuarnelhl_' .. self.uniqueid
                 highlight.FillColor = red
@@ -150,11 +239,9 @@ function esp.new()
                 local billboard = Instance.new('BillboardGui', CoreGui)
                 billboard.Name = 'thuarnelesp_' .. self.uniqueid
                 billboard.AlwaysOnTop = true
-                billboard.Adornee = character
                 insert(instances, billboard)
                 
                 local label = Instance.new('TextLabel')
-                label.Text = player.Name
                 label.TextColor3 = Color3.new(1, 1, 1)
                 label.BorderColor3 = red
                 label.TextStrokeColor3 = Color3.new(red.R / 2, red.G / 2, red.B / 2)
@@ -188,14 +275,16 @@ function esp:assign(value: Instance)
                 self.player = player
             end
             self.character = value
+        elseif value:IsA('BasePart') and is_phantom_forces then
+            self.rootpart = value
         end
     end
     return self.player, self.character
 end
 
 -- getassignment now just returns what was stored
-function esp:getassignment(): (Player?, Model?)
-    return self.player, self.character
+function esp:getassignment(): (Player?, Model?, BasePart?)
+    return self.player, self.character, self.rootpart
 end
 
 -- Helper to check if a player is already assigned an ESP instance
@@ -208,36 +297,77 @@ local function isPlayerAssigned(player: Player): boolean
     return false
 end
 
+local function isRootAssigned(rootpart: BasePart): boolean
+    for _, espInstance in ipairs(assigned) do
+        if espInstance.rootpart == rootpart then
+            return true
+        end
+    end
+    return false
+end
+
 for i = 1, 31 do
     insert(assignees, esp.new())
 end
 
+local roots = is_phantom_forces and workspace:WaitForChild('Roots', 5)
+
 connect(RunService.Stepped, function(elapsed_time: number, delta_time: number)
-    for _, player in pairs(Players:GetPlayers()) do
-        if not isPlayerAssigned(player) then
-            for _, espInstance in pairs(assignees) do
-                if type(espInstance) == 'table' and type(espInstance.assign) == 'function' then
-                    espInstance:assign(player)
-                    espInstance.event:Fire('assigned')
-                    insert(assigned, espInstance)
-                    local index = find(assignees, espInstance)
-                    if index then
-                        remove(assignees, index)
+    if is_phantom_forces and typeof(roots) == 'Instance' then
+        for _, rootpart in pairs(roots:GetChildren()) do
+            if not isRootAssigned(rootpart) then
+                for _, espInstance in pairs(assignees) do
+                    if type(espInstance) == 'table' and type(espInstance.assign) == 'function' then
+                        espInstance:assign(rootpart)
+                        espInstance.event:Fire('assigned')
+                        insert(assigned, espInstance)
+                        local index = find(assignees, espInstance)
+                        if index then
+                            remove(assignees, index)
+                        end
+                        break
                     end
-                    break
+                end
+            end
+        end
+    else
+        for _, player in pairs(Players:GetPlayers()) do
+            if not isPlayerAssigned(player) then
+                for _, espInstance in pairs(assignees) do
+                    if type(espInstance) == 'table' and type(espInstance.assign) == 'function' then
+                        espInstance:assign(player)
+                        espInstance.event:Fire('assigned')
+                        insert(assigned, espInstance)
+                        local index = find(assignees, espInstance)
+                        if index then
+                            remove(assignees, index)
+                        end
+                        break
+                    end
                 end
             end
         end
     end
 
     for _, espInstance in pairs(assigned) do
-        local character = select(2, espInstance:getassignment())
-        if not character or not character.Parent then
-            insert(assignees, espInstance)
-            espInstance.event:Fire()
-            local index = find(assigned, espInstance)
-            if index then
-                remove(assigned, index)
+        local _, character, rootpart = espInstance:getassignment()
+        if is_phantom_forces then
+            if not rootpart or not rootpart.Parent then
+                insert(assignees, espInstance)
+                espInstance.event:Fire()
+                local index = find(assigned, espInstance)
+                if index then
+                    remove(assigned, index)
+                end
+            end
+        else
+            if not character or not character.Parent then
+                insert(assignees, espInstance)
+                espInstance.event:Fire()
+                local index = find(assigned, espInstance)
+                if index then
+                    remove(assigned, index)
+                end
             end
         end
     end
