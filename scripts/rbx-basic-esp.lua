@@ -289,6 +289,7 @@ function esp.new()
 
                 local billboard = Instance.new('BillboardGui', CoreGui)
                 billboard.Name = 'thuarnelesp_' .. self.uniqueid
+                billboard.ClipsDescendants = false
                 billboard.AlwaysOnTop = true
                 insert(instances, billboard)
                 
@@ -303,6 +304,7 @@ function esp.new()
                 label.Size = UDim2.fromOffset(100, 25)
                 label.AnchorPoint = Vector2.new(0.5, 1)
                 label.Position = UDim2.fromScale(0.5, 0)
+                label.ClipsDescendants = false
                 label.Parent = billboard
                 insert(self.objects, billboard)
 
