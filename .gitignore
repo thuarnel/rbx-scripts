@@ -1,0 +1,7 @@
+__pycache__/
+scripts/private/
+*.txt
+*.py
+*.json
+final.md
+.venv/
