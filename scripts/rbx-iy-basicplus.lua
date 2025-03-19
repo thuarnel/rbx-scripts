@@ -102,7 +102,7 @@ end
 connect(workspace.DescendantAdded, saveMesh)
 
 local function isSound(v: Sound?): boolean
-    if typeoof(v) == 'Instance' and v:IsA('Sound') then
+    if typeof(v) == 'Instance' and v:IsA('Sound') then
         local wait_time = tick() + 3
         while not v.IsLoaded and tick() < wait_time do
             task.wait()
