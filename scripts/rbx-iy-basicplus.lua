@@ -102,7 +102,14 @@ end
 connect(workspace.DescendantAdded, saveMesh)
 
 local function isSound(v: Sound?): boolean
-    return typeof(v) == 'Instance' and v:IsA('Sound')
+    if typeoof(v) == 'Instance' and v:IsA('Sound') then
+        local wait_time = tick() + 3
+        while not v.IsLoaded and tick() < wait_time do
+            task.wait()
+        end
+        return v.TimeLength > 0 and v.IsLoaded == true
+    end
+    return false
 end
 
 local function getSoundData(sound: Sound?): { SoundId: string?, PlaybackSpeed: number? }?
@@ -369,6 +376,7 @@ local Plugin = {
             Description = 'Copies all sound IDs from instances with the given name or returns all sounds in the workspace.',
             Aliases = {},
             Function = function(args, speaker)
+                notify('Collecting Sounds', 'Collecting sounds, please wait...')
                 local name = args[1] and args[1]:lower() or nil
                 local collectedSounds = {}
         
