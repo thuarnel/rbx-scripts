@@ -230,12 +230,12 @@ local Plugin = {
             Description = 'Loads thuarnel\'s Phantom Forces ESP',
             Aliases = {'phantomforcesesp'},
             Function = function(args, speaker)
-                if not env.thuarnel_basic_esp_loaded then
-                    local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-basic-esp.lua'))
+                if not env.phantomforces_esp_loaded then
+                    local str = select(2, pcall(game.HttpGet, game, 'https://raw.githubusercontent.com/thuarnel/rbx-scripts/refs/heads/main/scripts/rbx-phantom-forces.lua'))
                     if type(str) == 'string' then
                         local f = select(2, pcall(loadstring, str))
                         if type(f) == 'function' then
-                            env.thuarnel_basic_esp_loaded = true
+                            env.phantomforces_esp_loaded = true
                             coroutine.resume(coroutine.create(f))
                         end
                     end
@@ -247,9 +247,9 @@ local Plugin = {
             Description = 'Unloads thuarnel\'s Phantom Forces ESP',
             Aliases = {'unphantomforcesesp', 'nopfesp', 'nophantomforcesesp'},
             Function = function(args, speaker)
-                if type(env.stop_thuarnel_basic_esp) == 'function' then
-                    env.stop_thuarnel_basic_esp()
-                    env.thuarnel_basic_esp_loaded = false
+                if type(env.stop_phantomforces_esp) == 'function' then
+                    env.stop_phantomforces_esp()
+                    env.phantomforces_esp_loaded = false
                 end
             end
         },
