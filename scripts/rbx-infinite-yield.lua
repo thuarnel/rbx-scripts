@@ -1,10 +1,13 @@
 --!nocheck
---!nolint UnknownGlobal
+--!nolint LocalShadow
+
+print('[IY]: ✅ Starting Infinite Yield...')
 
 local env = type(getgenv) == 'function' and getgenv()
+assert(type(env) == 'table', 'Missing global environment')
 
-if type(env) == 'table' and env.IY_LOADED and not env.IY_DEBUG then
-    return
+if type(env.stop_infiniteyield) == 'function' then
+	env.stop_infiniteyield()
 end
 
 if type(env.cloneref) ~= 'function' then
@@ -13,7 +16,7 @@ if type(env.cloneref) ~= 'function' then
     end
 end
 
-COREGUI = cloneref(game:GetService("CoreGui"))
+COREGUI = cloneref(game:GetService('CoreGui'))
 Players = cloneref(game:GetService("Players"))
 
 if not game:IsLoaded() then
@@ -167,27 +170,10 @@ function randomString()
 	return table.concat(array)
 end
 
-PARENT = nil
-if get_hidden_gui or gethui then
-    local hiddenUI = get_hidden_gui or gethui
-    local Main = Instance.new("ScreenGui")
-    Main.Name = randomString()
-    Main.Parent = hiddenUI()
-    PARENT = Main
-elseif (not is_sirhurt_closure) and (syn and syn.protect_gui) then
-    local Main = Instance.new("ScreenGui")
-    Main.Name = randomString()
-    syn.protect_gui(Main)
-    Main.Parent = COREGUI
-    PARENT = Main
-elseif COREGUI:FindFirstChild("RobloxGui") then
-    PARENT = COREGUI.RobloxGui
-else
-    local Main = Instance.new("ScreenGui")
-    Main.Name = randomString()
-    Main.Parent = COREGUI
-    PARENT = Main
-end
+local PARENT = Instance.new('ScreenGui')
+PARENT.Name = 'IY'
+PARENT.ResetOnSpawn = false
+PARENT.Parent = COREGUI
 
 shade1 = {}
 shade2 = {}
@@ -1840,13 +1826,19 @@ end
 
 TextService = cloneref(game:GetService("TextService"))
 ViewportTextBox = (function()
-
 	local funcs = {}
 	funcs.Update = function(self)
 		local cursorPos = self.TextBox.CursorPosition
 		local text = self.TextBox.Text
-		if text == "" then self.TextBox.Position = UDim2.new(0,2,0,0) return end
-		if cursorPos == -1 then return end
+		
+		if text == "" then
+			self.TextBox.Position = UDim2.fromOffset(2, 0)
+			return
+		end
+
+		if cursorPos == -1 then
+			return
+		end
 
 		local cursorText = text:sub(1,cursorPos-1)
 		local pos = nil
@@ -1963,8 +1955,10 @@ everyClipboard = setclipboard or toclipboard or set_clipboard or (Clipboard and 
 isLegacyChat = TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService
 
 local writefile = type(writefile) == "function" and function(file, data, safe)
-    if safe == true then return pcall(writefile, file, data) end
-    writefile(file, data)
+    if safe == true then
+		return pcall(writefile, file, data)
+	end
+	return writefile(file, data)
 end
 
 local readfile = type(readfile) == "function" and function(file, safe)
@@ -1976,35 +1970,45 @@ function writefileExploit()
 	if writefile then
 		return true
 	end
+	return nil
 end
 
 function readfileExploit()
 	if readfile then
 		return true
 	end
+	return nil
 end
 
 function isNumber(str)
 	if tonumber(str) ~= nil or str == 'inf' then
 		return true
 	end
+	return false
 end
 
 function getRoot(char)
-	local rootPart = char:FindFirstChild('HumanoidRootPart') or char:FindFirstChild('Torso') or char:FindFirstChild('UpperTorso')
-	return rootPart
+	if typeof(char) == 'Instance' then
+		local humanoid = char:FindFirstChildWhichIsA('Humanoid')
+		local rootpart = humanoid and humanoid.RootPart
+
+		return rootpart
+	end
+	return false
 end
 
 function tools(plr)
 	if plr:FindFirstChildOfClass("Backpack"):FindFirstChildOfClass('Tool') or plr.Character:FindFirstChildOfClass('Tool') then
 		return true
 	end
+	return false
 end
 
 function r15(plr)
 	if plr.Character:FindFirstChildOfClass('Humanoid').RigType == Enum.HumanoidRigType.R15 then
 		return true
 	end
+	return false
 end
 
 function toClipboard(txt)
@@ -2264,19 +2268,19 @@ eventEditor = (function()
 	local settingsFrame = mainFrame:WaitForChild("Settings"):WaitForChild("Slider")
 	local settingsTemplates = mainFrame.Settings:WaitForChild("Templates")
 	local settingsList = settingsFrame:WaitForChild("List"):WaitForChild("Holder")
-	table.insert(shade2,main.TopBar) table.insert(shade1,mainFrame) table.insert(shade2,eventTemplate)
-	table.insert(text1,eventTemplate.EventName) table.insert(shade1,eventTemplate.Cmds.Add) table.insert(shade1,cmdTemplate)
-	table.insert(text1,cmdTemplate.TextBox) table.insert(shade2,cmdTemplate.Delete) table.insert(shade2,cmdTemplate.Settings)
-	table.insert(scroll,mainFrame.List) table.insert(shade1,settingsFrame) table.insert(shade2,settingsFrame.Line)
-	table.insert(shade2,settingsFrame.Close) table.insert(scroll,settingsFrame.List) table.insert(shade2,settingsTemplates.DelayEditor.Secs)
-	table.insert(text1,settingsTemplates.DelayEditor.Secs) table.insert(text1,settingsTemplates.DelayEditor.Secs.Label) table.insert(text1,settingsTemplates.Players.Title)
-	table.insert(shade3,settingsTemplates.Players.CustomButton) table.insert(shade2,settingsTemplates.Players.Custom) table.insert(text1,settingsTemplates.Players.Custom)
-	table.insert(shade3,settingsTemplates.Players.Any.Button) table.insert(shade3,settingsTemplates.Players.Me.Button) table.insert(text1,settingsTemplates.Players.Any)
-	table.insert(text1,settingsTemplates.Players.Me) table.insert(text1,settingsTemplates.Strings.Title) table.insert(text1,settingsTemplates.Strings.Any)
-	table.insert(shade3,settingsTemplates.Strings.Any.Button) table.insert(shade3,settingsTemplates.Strings.CustomButton) table.insert(text1,settingsTemplates.Strings.Custom)
+	table.insert(shade2,main.TopBar); table.insert(shade1,mainFrame); table.insert(shade2,eventTemplate)
+	table.insert(text1,eventTemplate.EventName); table.insert(shade1,eventTemplate.Cmds.Add); table.insert(shade1,cmdTemplate)
+	table.insert(text1,cmdTemplate.TextBox); table.insert(shade2,cmdTemplate.Delete); table.insert(shade2,cmdTemplate.Settings)
+	table.insert(scroll,mainFrame.List); table.insert(shade1,settingsFrame); table.insert(shade2,settingsFrame.Line)
+	table.insert(shade2,settingsFrame.Close); table.insert(scroll,settingsFrame.List); table.insert(shade2,settingsTemplates.DelayEditor.Secs)
+	table.insert(text1,settingsTemplates.DelayEditor.Secs); table.insert(text1,settingsTemplates.DelayEditor.Secs.Label); table.insert(text1,settingsTemplates.Players.Title)
+	table.insert(shade3,settingsTemplates.Players.CustomButton); table.insert(shade2,settingsTemplates.Players.Custom); table.insert(text1,settingsTemplates.Players.Custom)
+	table.insert(shade3,settingsTemplates.Players.Any.Button); table.insert(shade3,settingsTemplates.Players.Me.Button); table.insert(text1,settingsTemplates.Players.Any)
+	table.insert(text1,settingsTemplates.Players.Me); table.insert(text1,settingsTemplates.Strings.Title); table.insert(text1,settingsTemplates.Strings.Any)
+	table.insert(shade3,settingsTemplates.Strings.Any.Button); table.insert(shade3,settingsTemplates.Strings.CustomButton); table.insert(text1,settingsTemplates.Strings.Custom)
 	table.insert(shade2,settingsTemplates.Strings.Custom)
-	table.insert(text1,settingsTemplates.Players.Me) table.insert(text1,settingsTemplates.Numbers.Title) table.insert(text1,settingsTemplates.Numbers.Any)
-	table.insert(shade3,settingsTemplates.Numbers.Any.Button) table.insert(shade3,settingsTemplates.Numbers.CustomButton) table.insert(text1,settingsTemplates.Numbers.Custom)
+	table.insert(text1,settingsTemplates.Players.Me); table.insert(text1,settingsTemplates.Numbers.Title); table.insert(text1,settingsTemplates.Numbers.Any)
+	table.insert(shade3,settingsTemplates.Numbers.Any.Button); table.insert(shade3,settingsTemplates.Numbers.CustomButton); table.insert(text1,settingsTemplates.Numbers.Custom)
 	table.insert(shade2,settingsTemplates.Numbers.Custom)
 
 	local tweenInf = TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.Out)
@@ -2340,9 +2344,9 @@ eventEditor = (function()
 		end)
 
 		return {
-			Toggle = function(nocall) enabled = not enabled update() if not nocall and callback then callback(enabled) end end,
-			Enable = function(nocall) if enabled then return end enabled = true update()if not nocall and callback then callback(enabled) end end,
-			Disable = function(nocall) if not enabled then return end enabled = false update()if not nocall and callback then callback(enabled) end end,
+			Toggle = function(nocall) enabled = not enabled; update(); if not nocall and callback then callback(enabled) end end,
+			Enable = function(nocall) if enabled then return end; enabled = true; update(); if not nocall and callback then callback(enabled) end end,
+			Disable = function(nocall) if not enabled then return end; enabled = false; update(); if not nocall and callback then callback(enabled) end end,
 			IsEnabled = function() return enabled end
 		}
 	end
@@ -2947,6 +2951,7 @@ end
 
 local loadedEventData = nil
 local jsonAttempts = 0
+
 function saves()
     if writefileExploit() and readfileExploit() and jsonAttempts < 10 then
         local readSuccess, out = readfile("IY_FE.iy", true)
@@ -2965,7 +2970,7 @@ function saves()
                     if vtype(json.aliases, "table") then aliases = json.aliases else aliases = {} end
                     if vtype(json.binds, "table") then binds = json.binds else binds = {} end
                     if vtype(json.spawnCmds, "table") then spawnCmds = json.spawnCmds end
-                    if vtype(json.WayPoints, "table") then AllWaypoints = json.WayPoints else WayPoints = {} AllWaypoints = {} end
+                    if vtype(json.WayPoints, "table") then AllWaypoints = json.WayPoints else WayPoints = {}; AllWaypoints = {} end
                     if vtype(json.PluginsTable, "table") then PluginsTable = json.PluginsTable else PluginsTable = {} end
                     if vtype(json.currentShade1, "table") then currentShade1 = Color3.new(json.currentShade1[1],json.currentShade1[2],json.currentShade1[3]) end
                     if vtype(json.currentShade2, "table") then currentShade2 = Color3.new(json.currentShade2[1],json.currentShade2[2],json.currentShade2[3]) end
@@ -4097,6 +4102,7 @@ end)
 
 cmds={}
 customAlias = {}
+
 Delete_3.MouseButton1Click:Connect(function()
 	customAlias = {}
 	aliases = {}
@@ -4198,7 +4204,7 @@ end
 
 dragMain(Title,Holder)
 
-Match = function(name,str)
+function Match(name,str)
 	str = str:gsub("%W", "%%%1")
 	return name:lower():find(str:lower()) and true
 end
@@ -4206,8 +4212,7 @@ end
 local canvasPos = Vector2.new(0,0)
 local topCommand = nil
 IndexContents = function(str,bool,cmdbar,Ianim)
-	CMDsF.CanvasPosition = Vector2.new(0,0)
-	local SizeY = 0
+	CMDsF.CanvasPosition = Vector2.new(0, 0)
 	local indexnum = 0
 	local frame = CMDsF
 	topCommand = nil
@@ -4257,7 +4262,7 @@ end
 task.spawn(function()
 	if not isLegacyChat then return end
 	local chatbox
-	local success, result = pcall(function() chatbox = PlayerGui:WaitForChild("Chat").Frame.ChatBarParentFrame.Frame.BoxFrame.Frame.ChatBar end)
+	local success = pcall(function() chatbox = PlayerGui:WaitForChild("Chat").Frame.ChatBarParentFrame.Frame.BoxFrame.Frame.ChatBar end)
 	if success then
 		local function chatboxFocused()
 			canvasPos = CMDsF.CanvasPosition
@@ -4344,34 +4349,62 @@ local commands = { list = {} :: {
         plugin: string?
     }
 } }
+local list = commands['list']
+
+function refreshCommandList()
+	local existingCmds = {}
+
+	for _, existingCmd in ipairs(CMDsF:GetChildren()) do
+		if existingCmd:IsA("TextButton") and existingCmd.Name == "CMD" then
+			existingCmds[existingCmd.Text] = true
+		end
+	end
+
+	for name, info in pairs(list) do
+		local cmdText = type(info.usage) == "string" and info.usage or name
+
+		if not existingCmds[cmdText] then
+			existingCmds[cmdText] = true
+
+			local newcmd = Example:Clone()
+			newcmd.Parent = CMDsF
+			newcmd.Visible = false
+			newcmd.Text = cmdText
+			newcmd.Name = "CMD"
+			table.insert(text1, newcmd)
+
+			if type(info.description) == "string" and info.description ~= "" then
+				newcmd:SetAttribute("Title", cmdText)
+				newcmd:SetAttribute("Desc", info.description)
+
+				newcmd.MouseButton1Click:Connect(function()
+					if not IsOnMobile and newcmd.Visible and newcmd.TextTransparency == 0 then
+						local currentText = Cmdbar.Text
+						Cmdbar:CaptureFocus()
+						autoComplete(newcmd.Text, currentText)
+						maximizeHolder()
+					end
+				end)
+			end
+		end
+	end
+end
 
 function commands:new(name, info)
     if type(name) == 'string' and type(info) == 'table' then
         self.list[name] = info
+		refreshCommandList()
     end
 end
 
-local list = commands['list']
-
-for name, info in pairs(list) do
-	local newcmd = Example:Clone()
-	newcmd.Parent = CMDsF
-	newcmd.Visible = false
-	newcmd.Text = name
-	newcmd.Name = "CMD"
-	table.insert(text1, newcmd)
-	if list[i].DESC ~= "" then
-		newcmd:SetAttribute("Title", type(info.usage) == 'string' and info.usage or name)
-		newcmd:SetAttribute("Desc", info.description)
-		newcmd.MouseButton1Down:Connect(function()
-			if not IsOnMobile and newcmd.Visible and newcmd.TextTransparency == 0 then
-				local currentText = Cmdbar.Text
-				Cmdbar:CaptureFocus()
-				autoComplete(newcmd.Text, currentText)
-				maximizeHolder()
-			end
-		end)
-	end
+local function addcmd(name, aliases, callback, plugin)
+	commands:new(name, {
+		usage = name,
+		description = 'Legacy command, no description available.',
+		callback = callback,
+		aliases = aliases,
+		plugin = plugin
+	})
 end
 
 IndexContents("", true)
@@ -4415,10 +4448,13 @@ function checkTT()
 end
 
 function FindInTable(tbl,val)
-	if tbl == nil then return false end
-	for _,v in pairs(tbl) do
-		if v == val then return true end
-	end 
+	if type(tbl) == 'table' then
+		for _, v in pairs(tbl) do
+			if v == val then
+				return true
+			end
+		end
+	end
 	return false
 end
 
@@ -4499,13 +4535,14 @@ end)
 onDied()
 
 function getstring(begin)
-	local start = begin-1
-	local AA = '' for i,v in pairs(cargs) do
+	local start = begin - 1
+	local AA = ''
+	for i,v in pairs(cargs) do
 		if i > start then
 			if AA ~= '' then
-				AA = AA .. ' ' .. v
+				AA ..= ' ' .. v
 			else
-				AA = AA .. v
+				AA ..= v
 			end
 		end
 	end
@@ -4514,8 +4551,8 @@ end
 
 function findCmd(name: string)
     if type(name) == 'string' then
-        for command_name in pairs(list) do
-            if command_name:lower() == name:lower() or FindInTable(info.aliases, command_name:lower()) then
+        for command_name, info in pairs(list) do
+            if command_name:lower() == name:lower() or FindInTable(info.aliases, name:lower()) then
                 return info
             end
         end
@@ -4537,10 +4574,12 @@ function splitString(str,delim)
 end
 
 cmdHistory = {}
+
 local lastCmds = {}
 local historyCount = 0
-local split=" "
+local split = ' '
 local lastBreakTime = 0
+
 function execCmd(cmdStr,speaker,store)
 	cmdStr = cmdStr:gsub("%s+$","")
 	task.spawn(function()
@@ -4549,24 +4588,24 @@ function execCmd(cmdStr,speaker,store)
 		local commandsToRun = splitString(cmdStr,"\\")
 		for i,v in pairs(commandsToRun) do
 			v = string.gsub(v,"%%BackSlash%%","\\")
-			local x,y,num = v:find("^(%d+)%^")
+			local _, y, num = v:find("^(%d+)%^")
 			local cmdDelay = 0
 			local infTimes = false
 			if num then
-				v = v:sub(y+1)
-				local x,y,del = v:find("^([%d%.]+)%^")
+				v = v:sub(y + 1)
+				local _, y, del = v:find("^([%d%.]+)%^")
 				if del then
 					v = v:sub(y+1)
 					cmdDelay = tonumber(del) or 0
 				end
 			else
-				local x,y = v:find("^inf%^")
+				local x, y = v:find("^inf%^")
 				if x then
 					infTimes = true
 					v = v:sub(y+1)
 					local x,y,del = v:find("^([%d%.]+)%^")
 					if del then
-						v = v:sub(y+1)
+						v = v:sub(y + 1)
 						del = tonumber(del) or 1
 						cmdDelay = (del > 0 and del or 1)
 					else
@@ -4601,8 +4640,8 @@ function execCmd(cmdStr,speaker,store)
 				local cmdStartTime = tick()
 				if infTimes then
 					while lastBreakTime < cmdStartTime do
-						local success,err = pcall(cmd.FUNC,args, speaker)
-						if not success and _G.IY_DEBUG then
+						local success,err = pcall(cmd.callback,args, speaker)
+						if not success and env.IY_DEBUG then
 							warn("Command Error:", cmdName, err)
 						end
 						wait(cmdDelay)
@@ -4611,9 +4650,9 @@ function execCmd(cmdStr,speaker,store)
 					for rep = 1,num do
 						if lastBreakTime > cmdStartTime then break end
 						local success,err = pcall(function()
-							cmd.FUNC(args, speaker)
+							cmd.callback(args, speaker)
 						end)
-						if not success and _G.IY_DEBUG then
+						if not success and env.IY_DEBUG then
 							warn("Command Error:", cmdName, err)
 						end
 						if cmdDelay ~= 0 then wait(cmdDelay) end
@@ -4624,11 +4663,11 @@ function execCmd(cmdStr,speaker,store)
 	end)
 end
 
-function removecmd(cmd)
-	if cmd ~= " " then
-		for i = #cmds,1,-1 do
-			if cmds[i].NAME == cmd or FindInTable(cmds[i].ALIAS,cmd) then
-				table.remove(cmds, i)
+function removeCommand(cmd)
+	if type(cmd) == 'string' and cmd ~= ' ' then
+		for name, info in pairs(list) do
+			if name:lower() == cmd:lower() or FindInTable(info.aliases, cmd:lower()) then
+				list[name] = nil
 				for a,c in pairs(CMDsF:GetChildren()) do
 					if string.find(c.Text, "^"..cmd.."$") or string.find(c.Text, "^"..cmd.." ") or string.find(c.Text, " "..cmd.."$") or string.find(c.Text, " "..cmd.." ") then
 						c.TextTransparency = 0.7
@@ -4637,32 +4676,27 @@ function removecmd(cmd)
 						end)
 					end
 				end
+				return true
 			end
 		end
 	end
-end
-
-function overridecmd(name, func)
-    local cmd = findCmd(name)
-    if cmd and cmd.FUNC then cmd.FUNC = func end
+	return false
 end
 
 function addbind(cmd,key,iskeyup,toggle)
 	if toggle then
-		binds[#binds+1]=
-			{
-				COMMAND=cmd;
-				KEY=key;
-				ISKEYUP=iskeyup;
-				TOGGLE = toggle;
-			}
+		binds[#binds + 1] = {
+			COMMAND = cmd,
+			KEY = key,
+			ISKEYUP = iskeyup,
+			TOGGLE = toggle
+		}
 	else
-		binds[#binds+1]=
-			{
-				COMMAND=cmd;
-				KEY=key;
-				ISKEYUP=iskeyup;
-			}
+		binds[#binds + 1] = {
+			COMMAND = cmd,
+			KEY = key,
+			ISKEYUP = iskeyup
+		}
 	end
 end
 
@@ -5761,23 +5795,23 @@ function deletePlugin(name)
 	if name:sub(-3) == '.iy' then
 		pName = name
 	end
-	for i = #cmds,1,-1 do
-		if cmds[i].PLUGIN == pName then
-			table.remove(cmds, i)
+	for name, info in pairs(list) do
+		if info.plugin:lower() == pName:lower() then
+			list[name] = nil
 		end
 	end
-	for i,v in pairs(CMDsF:GetChildren()) do
+	for i, v in pairs(CMDsF:GetChildren()) do
 		if v.Name == 'PLUGIN_'..pName then
 			v:Destroy()
 		end
 	end
-	for i,v in pairs(PluginsTable) do
+	for i, v in pairs(PluginsTable) do
 		if v == pName then
 			table.remove(PluginsTable, i)
-			notify('Removed Plugin',pName..' was removed')
+			notify('Removed Plugin', pName .. ' was removed')
 		end
 	end
-	IndexContents('',true)
+	IndexContents('', true)
 	refreshplugins()
 end
 
@@ -5931,7 +5965,7 @@ local TeleportCheck = false
 Players.LocalPlayer.OnTeleport:Connect(function(State)
 	if KeepInfYield and (not TeleportCheck) and queueteleport then
 		TeleportCheck = true
-		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()")
+		-- queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()")
 	end
 end)
 
@@ -9196,392 +9230,597 @@ addcmd("unflyjump", {"noflyjump"}, function(args, speaker)
 end)
 
 local HumanModCons = {}
-addcmd('autojump',{'ajump'},function(args, speaker)
-	local Char = speaker.Character
-	local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
-	local function autoJump()
-		if Char and Human then
-			local check1 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position-Vector3.new(0,1.5,0), Human.RootPart.CFrame.lookVector*3), Human.Parent)
-			local check2 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position+Vector3.new(0,1.5,0), Human.RootPart.CFrame.lookVector*3), Human.Parent)
-			if check1 or check2 then
-				Human.Jump = true
+
+commands:new('autojump', {
+	usage = 'autojump / ajump',
+	aliases = { 'ajump' },
+	description = 'Automatically makes the player jump when obstacles are detected in front of them.',
+	callback = function(args, speaker)
+		local Char = speaker.Character
+		local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
+		local function autoJump()
+			if Char and Human then
+				local check1 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position - Vector3.new(0, 1.5, 0), Human.RootPart.CFrame.lookVector * 3), Human.Parent)
+				local check2 = workspace:FindPartOnRay(Ray.new(Human.RootPart.Position + Vector3.new(0, 1.5, 0), Human.RootPart.CFrame.lookVector * 3), Human.Parent)
+				if check1 or check2 then
+					Human.Jump = true
+				end
 			end
 		end
-	end
-	autoJump()
-	HumanModCons.ajLoop = (HumanModCons.ajLoop and HumanModCons.ajLoop:Disconnect() and false) or RunService.RenderStepped:Connect(autoJump)
-	HumanModCons.ajCA = (HumanModCons.ajCA and HumanModCons.ajCA:Disconnect() and false) or speaker.CharacterAdded:Connect(function(nChar)
-		Char, Human = nChar, nChar:WaitForChild("Humanoid")
 		autoJump()
+
 		HumanModCons.ajLoop = (HumanModCons.ajLoop and HumanModCons.ajLoop:Disconnect() and false) or RunService.RenderStepped:Connect(autoJump)
-	end)
-end)
-
-addcmd('unautojump',{'noautojump', 'noajump', 'unajump'},function(args, speaker)
-	HumanModCons.ajLoop = (HumanModCons.ajLoop and HumanModCons.ajLoop:Disconnect() and false) or nil
-	HumanModCons.ajCA = (HumanModCons.ajCA and HumanModCons.ajCA:Disconnect() and false) or nil
-end)
-
-addcmd('edgejump',{'ejump'},function(args, speaker)
-	local Char = speaker.Character
-	local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
-	-- Full credit to NoelGamer06 @V3rmillion
-	local state
-	local laststate
-	local lastcf
-	local function edgejump()
-		if Char and Human then
-			laststate = state
-			state = Human:GetState()
-			if laststate ~= state and state == Enum.HumanoidStateType.Freefall and laststate ~= Enum.HumanoidStateType.Jumping then
-				Char.HumanoidRootPart.CFrame = lastcf
-				Char.HumanoidRootPart.Velocity = Vector3.new(Char.HumanoidRootPart.Velocity.X, Human.JumpPower or Human.JumpHeight, Char.HumanoidRootPart.Velocity.Z)
-			end
-			lastcf = Char.HumanoidRootPart.CFrame
-		end
+		HumanModCons.ajCA = (HumanModCons.ajCA and HumanModCons.ajCA:Disconnect() and false) or speaker.CharacterAdded:Connect(function(nChar)
+			Char, Human = nChar, nChar:WaitForChild("Humanoid")
+			autoJump()
+			HumanModCons.ajLoop = (HumanModCons.ajLoop and HumanModCons.ajLoop:Disconnect() and false) or RunService.RenderStepped:Connect(autoJump)
+		end)
 	end
-	edgejump()
-	HumanModCons.ejLoop = (HumanModCons.ejLoop and HumanModCons.ejLoop:Disconnect() and false) or RunService.RenderStepped:Connect(edgejump)
-	HumanModCons.ejCA = (HumanModCons.ejCA and HumanModCons.ejCA:Disconnect() and false) or speaker.CharacterAdded:Connect(function(nChar)
-		Char, Human = nChar, nChar:WaitForChild("Humanoid")
+})
+
+commands:new('unautojump', {
+	usage = 'unautojump / noautojump / noajump / unajump',
+	aliases = { 'noautojump', 'noajump', 'unajump' },
+	description = 'Disables the auto-jump functionality.',
+	callback = function(args, speaker)
+		HumanModCons.ajLoop = (HumanModCons.ajLoop and HumanModCons.ajLoop:Disconnect() and false) or nil
+		HumanModCons.ajCA = (HumanModCons.ajCA and HumanModCons.ajCA:Disconnect() and false) or nil
+	end
+})
+
+commands:new('edgejump', {
+	usage = 'edgejump / ejump',
+	aliases = { 'ejump' },
+	description = 'Performs an edge jump when the player falls and is no longer in a jumping state.',
+	callback = function(args, speaker)
+		local Char = speaker.Character
+		local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
+
+		-- Full credit to NoelGamer06 @V3rmillion
+		local state
+		local laststate
+		local lastcf
+
+		local function edgejump()
+			if Char and Human then
+				laststate = state
+				state = Human:GetState()
+				if laststate ~= state and state == Enum.HumanoidStateType.Freefall and laststate ~= Enum.HumanoidStateType.Jumping then
+					Char.HumanoidRootPart.CFrame = lastcf
+					Char.HumanoidRootPart.Velocity = Vector3.new(Char.HumanoidRootPart.Velocity.X, Human.JumpPower or Human.JumpHeight, Char.HumanoidRootPart.Velocity.Z)
+				end
+				lastcf = Char.HumanoidRootPart.CFrame
+			end
+		end
+		
 		edgejump()
+
 		HumanModCons.ejLoop = (HumanModCons.ejLoop and HumanModCons.ejLoop:Disconnect() and false) or RunService.RenderStepped:Connect(edgejump)
-	end)
-end)
 
-addcmd('unedgejump',{'noedgejump', 'noejump', 'unejump'},function(args, speaker)
-	HumanModCons.ejLoop = (HumanModCons.ejLoop and HumanModCons.ejLoop:Disconnect() and false) or nil
-	HumanModCons.ejCA = (HumanModCons.ejCA and HumanModCons.ejCA:Disconnect() and false) or nil
-end)
+		HumanModCons.ejCA = (HumanModCons.ejCA and HumanModCons.ejCA:Disconnect() and false) or speaker.CharacterAdded:Connect(function(nChar)
+			Char, Human = nChar, nChar:WaitForChild("Humanoid")
+			edgejump()
+			HumanModCons.ejLoop = (HumanModCons.ejLoop and HumanModCons.ejLoop:Disconnect() and false) or RunService.RenderStepped:Connect(edgejump)
+		end)
+	end
+})
 
-addcmd('team',{},function(args, speaker)
-	local teamname = nil
-	for a,b in pairs(Teams:GetChildren()) do
-		local L_name = b.Name:lower()
-		local F = L_name:find(getstring(1))
-		if F == 1 then
-			teamname = b 
+commands:new('unedgejump', {
+	usage = 'unedgejump / noedgejump / noejump / unejump',
+	aliases = { 'noedgejump', 'noejump', 'unejump' },
+	description = 'Disables edge jump by disconnecting related event listeners.',
+	callback = function(args, speaker)
+		HumanModCons.ejLoop = (HumanModCons.ejLoop and HumanModCons.ejLoop:Disconnect() and false) or nil
+		HumanModCons.ejCA = (HumanModCons.ejCA and HumanModCons.ejCA:Disconnect() and false) or nil
+	end
+})
+
+commands:new('team', {
+	usage = 'team [teamName]',
+	aliases = {},
+	description = 'Sets the speaker\'s team based on the provided team name.',
+	callback = function(args, speaker)
+		local teamname = nil
+		for _, b in pairs(Teams:GetChildren()) do
+			local L_name = b.Name:lower()
+			local F = L_name:find(getstring(1))
+			if F == 1 then
+				teamname = b
+			end
+		end
+		if teamname then
+			speaker.Team = teamname
 		end
 	end
-	speaker.Team = teamname
-end)
+})
 
-addcmd('nobgui',{'unbgui','nobillboardgui','unbillboardgui','noname','rohg'},function(args, speaker)
-	for i,v in pairs(speaker.Character:GetDescendants())do
-		if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
-			v:Destroy()
-		end
-	end
-end)
-
-addcmd('loopnobgui',{'loopunbgui','loopnobillboardgui','loopunbillboardgui','loopnoname','looprohg'},function(args, speaker)
-	for i,v in pairs(speaker.Character:GetDescendants())do
-		if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
-			v:Destroy()
-		end
-	end
-	local function charPartAdded(part)
-		if part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
-			wait()
-			part:Destroy()
-		end
-	end
-	charPartTrigger = speaker.Character.DescendantAdded:Connect(charPartAdded)
-end)
-
-addcmd('unloopnobgui',{'unloopunbgui','unloopnobillboardgui','unloopunbillboardgui','unloopnoname','unlooprohg'},function(args, speaker)
-	if charPartTrigger then
-		charPartTrigger:Disconnect()
-	end
-end)
-
-addcmd('spasm',{},function(args, speaker)
-	if not r15(speaker) then
-		local pchar=speaker.Character
-		local AnimationId = "33796059"
-		SpasmAnim = Instance.new("Animation")
-		SpasmAnim.AnimationId = "rbxassetid://"..AnimationId
-		Spasm = pchar:FindFirstChildOfClass('Humanoid'):LoadAnimation(SpasmAnim)
-		Spasm:Play()
-		Spasm:AdjustSpeed(99)
-	else
-		notify('R6 Required','This command requires the r6 rig type')
-	end
-end)
-
-addcmd('unspasm',{'nospasm'},function(args, speaker)
-	Spasm:Stop()
-	SpasmAnim:Destroy()
-end)
-
-addcmd('headthrow',{},function(args, speaker)
-	if not r15(speaker) then
-		local AnimationId = "35154961"
-		local Anim = Instance.new("Animation")
-		Anim.AnimationId = "rbxassetid://"..AnimationId
-		local k = speaker.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(Anim)
-		k:Play(0)
-		k:AdjustSpeed(1)
-	else
-		notify('R6 Required','This command requires the r6 rig type')
-	end
-end)
-
-addcmd('animation',{'anim'},function(args, speaker)
-	if not r15(speaker) then
-		local pchar=speaker.Character
-		local AnimationId = tostring(args[1])
-		local Anim = Instance.new("Animation")
-		Anim.AnimationId = "rbxassetid://"..AnimationId
-		local k = pchar:FindFirstChildOfClass('Humanoid'):LoadAnimation(Anim)
-		k:Play()
-		if args[2] then
-			k:AdjustSpeed(tostring(args[2]))
-		end
-	else
-		notify('R6 Required','This command requires the r6 rig type')
-	end
-end)
-
-addcmd('noanim',{},function(args, speaker)
-	speaker.Character.Animate.Disabled = true
-end)
-
-addcmd('reanim',{},function(args, speaker)
-	speaker.Character.Animate.Disabled = false
-end)
-
-addcmd('animspeed',{},function(args, speaker)
-	local Char = speaker.Character
-	local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
-
-	for i,v in next, Hum:GetPlayingAnimationTracks() do
-		v:AdjustSpeed(tonumber(args[1] or 1))
-	end
-end)
-
-addcmd('copyanimation',{'copyanim','copyemote'},function(args, speaker)
-	local players = getPlayer(args[1], speaker)
-	for _,v in ipairs(players)do
-		local char = Players[v].Character
-		for _, v1 in pairs(speaker.Character:FindFirstChildOfClass('Humanoid'):GetPlayingAnimationTracks()) do
-			v1:Stop()
-		end
-		for _, v1 in pairs(Players[v].Character:FindFirstChildOfClass('Humanoid'):GetPlayingAnimationTracks()) do
-			if not string.find(v1.Animation.AnimationId, "507768375") then
-				local ANIM = speaker.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(v1.Animation)
-				ANIM:Play(.1, 1, v1.Speed)
-				ANIM.TimePosition = v1.TimePosition
-				task.spawn(function()
-					v1.Stopped:Wait()
-					ANIM:Stop()
-					ANIM:Destroy()
-				end)
+commands:new('nobgui', {
+	usage = 'nobgui / unbgui / nobillboardgui / unbillboardgui / noname / rohg',
+	aliases = { 'unbgui', 'nobillboardgui', 'unbillboardgui', 'noname', 'rohg' },
+	description = 'Removes all BillboardGui and SurfaceGui objects from the player\'s character.',
+	callback = function(args, speaker)
+		for _, v in pairs(speaker.Character:GetDescendants()) do
+			if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+				v:Destroy()
 			end
 		end
 	end
-end)
+})
 
-addcmd("copyanimationid", {"copyanimid", "copyemoteid"}, function(args, speaker)
-    local copyAnimId = function(player)
-        local found = "Animations Copied"
-
-        for _, v in pairs(player.Character:FindFirstChildWhichIsA("Humanoid"):GetPlayingAnimationTracks()) do
-            local animationId = v.Animation.AnimationId
-            local assetId = animationId:find("rbxassetid://") and animationId:match("%d+")
-
-            if not string.find(animationId, "507768375") and not string.find(animationId, "180435571") then
-                if assetId then
-                    local success, result = pcall(function()
-                        return MarketplaceService:GetProductInfo(tonumber(assetId)).Name
-                    end)
-                    local name = success and result or "Failed to get name"
-                    found = found .. "\n\nName: " .. name .. "\nAnimation Id: " .. animationId
-                else
-                    found = found .. "\n\nAnimation Id: " .. animationId
-                end
-            end
-        end
-
-        if found ~= "Animations Copied" then
-            toClipboard(found)
-        else
-            notify("Animations", "No animations to copy")
-        end
-    end
-
-    if args[1] then
-        copyAnimId(Players[getPlayer(args[1], speaker)[1]])
-    else
-        copyAnimId(speaker)
-    end
-end)
-
-addcmd('stopanimations',{'stopanims','stopanim'},function(args, speaker)
-	local Char = speaker.Character
-	local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
-
-	for i,v in next, Hum:GetPlayingAnimationTracks() do
-		v:Stop()
-	end
-end)
-
-addcmd('refreshanimations', {'refreshanimation', 'refreshanims', 'refreshanim'}, function(args, speaker)
-	local Char = speaker.Character or speaker.CharacterAdded:Wait()
-	local Human = Char and Char:WaitForChild('Humanoid', 15)
-	local Animate = Char and Char:WaitForChild('Animate', 15)
-	if not Human or not Animate then
-		return notify('Refresh Animations', 'Failed to get Animate/Humanoid')
-	end
-	Animate.Disabled = true
-	for _, v in ipairs(Human:GetPlayingAnimationTracks()) do
-		v:Stop()
-	end
-	Animate.Disabled = false
-end)
-
-addcmd('allowcustomanim', {'allowcustomanimations'}, function(args, speaker)
-	StarterPlayer.AllowCustomAnimations = true
-	execCmd('refreshanimations')
-end)
-
-addcmd('unallowcustomanim', {'unallowcustomanimations'}, function(args, speaker)
-	StarterPlayer.AllowCustomAnimations = false
-	execCmd('refreshanimations')
-end)
-
-addcmd('loopanimation', {'loopanim'},function(args, speaker)
-	local Char = speaker.Character
-	local Human = Char and Char.FindFirstChildWhichIsA(Char, "Humanoid")
-	for _, v in ipairs(Human.GetPlayingAnimationTracks(Human)) do
-		v.Looped = true
-	end
-end)
-
-addcmd('tpposition',{'tppos'},function(args, speaker)
-	if #args < 3 then return end
-	local tpX,tpY,tpZ = tonumber((args[1]:gsub(",", ""))),tonumber((args[2]:gsub(",", ""))),tonumber((args[3]:gsub(",", "")))
-	local char = speaker.Character
-	if char and getRoot(char) then
-		getRoot(char).CFrame = CFrame.new(tpX,tpY,tpZ)
-	end
-end)
-
-addcmd('tweentpposition',{'ttppos'},function(args, speaker)
-	if #args < 3 then return end
-	local tpX,tpY,tpZ = tonumber((args[1]:gsub(",", ""))),tonumber((args[2]:gsub(",", ""))),tonumber((args[3]:gsub(",", "")))
-	local char = speaker.Character
-	if char and getRoot(char) then
-		TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(tpX,tpY,tpZ)}):Play()
-	end
-end)
-
-addcmd('offset',{},function(args, speaker)
-	if #args < 3 then
-		return 
-	end
-	if speaker.Character then
-		speaker.Character:TranslateBy(Vector3.new(tonumber(args[1]) or 0, tonumber(args[2]) or 0, tonumber(args[3]) or 0))
-	end
-end)
-
-addcmd('tweenoffset',{'toffset'},function(args, speaker)
-	if #args < 3 then return end
-	local tpX,tpY,tpZ = tonumber(args[1]),tonumber(args[2]),tonumber(args[3])
-	local char = speaker.Character
-	if char and getRoot(char) then
-		TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(tpX,tpY,tpZ)}):Play()
-	end
-end)
-
-addcmd('clickteleport',{},function(args, speaker)
-	if speaker == Players.LocalPlayer then
-		notify('Click TP','Go to Settings>Keybinds>Add to set up click tp')
-	end
-end)
-
-addcmd("mouseteleport", {"mousetp"}, function(args, speaker)
-    local root = getRoot(speaker.Character)
-    local pos = IYMouse.Hit
-    if root and pos then
-        root.CFrame = CFrame.new(pos.X, pos.Y + 3, pos.Z, select(4, root.CFrame:components()))
-    end
-end)
-
-addcmd('tptool', {'teleporttool'}, function(args, speaker)
-	local TpTool = Instance.new("Tool")
-	TpTool.Name = "Teleport Tool"
-	TpTool.RequiresHandle = false
-	TpTool.Parent = speaker.Backpack
-	TpTool.Activated:Connect(function()
-		local Char = speaker.Character or workspace:FindFirstChild(speaker.Name)
-		local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
-		if not Char or not HRP then
-			return warn("Failed to find HumanoidRootPart")
+commands:new('loopnobgui', {
+	usage = 'loopnobgui / loopunbgui / loopnobillboardgui / loopunbillboardgui / loopnoname / looprohg',
+	aliases = { 'loopunbgui', 'loopnobillboardgui', 'loopunbillboardgui', 'loopnoname', 'looprohg' },
+	description = 'Loops to destroy any BillboardGui or SurfaceGui in the character and prevents future ones from being added.',
+	callback = function(args, speaker)
+		for _, v in pairs(speaker.Character:GetDescendants()) do
+			if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
+				v:Destroy()
+			end
 		end
-		HRP.CFrame = CFrame.new(IYMouse.Hit.X, IYMouse.Hit.Y + 3, IYMouse.Hit.Z, select(4, HRP.CFrame:components()))
-	end)
-end)
-
-addcmd('clickdelete',{},function(args, speaker)
-	if speaker == Players.LocalPlayer then
-		notify('Click Delete','Go to Settings>Keybinds>Add to set up click delete')
-	end
-end)
-
-addcmd('getposition',{'getpos','notifypos','notifyposition'},function(args, speaker)
-	local players = getPlayer(args[1], speaker)
-	for i,v in pairs(players)do
-		local char = Players[v].Character
-		local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
-		pos = pos and pos.Position
-		if not pos then
-			return notify('Getposition Error','Missing character')
+		
+		local function charPartAdded(part)
+			if part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
+				wait()
+				part:Destroy()
+			end
 		end
-		local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
-		notify('Current Position',roundedPos)
+		
+		charPartTrigger = speaker.Character.DescendantAdded:Connect(charPartAdded)
 	end
-end)
+})
 
-addcmd('copyposition',{'copypos'},function(args, speaker)
-	local players = getPlayer(args[1], speaker)
-	for i,v in pairs(players)do
-		local char = Players[v].Character
-		local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
-		pos = pos and pos.Position
-		if not pos then
-			return notify('Getposition Error','Missing character')
-		end
-		local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
-		toClipboard(roundedPos)
-	end
-end)
-
-addcmd('walktopos',{'walktoposition'},function(args, speaker)
-	if speaker.Character:FindFirstChildOfClass('Humanoid') and speaker.Character:FindFirstChildOfClass('Humanoid').SeatPart then
-		speaker.Character:FindFirstChildOfClass('Humanoid').Sit = false
-		wait(.1)
-	end
-	speaker.Character:FindFirstChildOfClass('Humanoid').WalkToPoint = Vector3.new(args[1],args[2],args[3])
-end)
-
-addcmd('speed',{'ws','walkspeed'},function(args, speaker)
-	if args[2] then
-		local speed = args[2] or 16
-		if isNumber(speed) then
-			speaker.Character:FindFirstChildOfClass('Humanoid').WalkSpeed = speed
-		end
-	else
-		local speed = args[1] or 16
-		if isNumber(speed) then
-			speaker.Character:FindFirstChildOfClass('Humanoid').WalkSpeed = speed
+commands:new('unloopnobgui', {
+	usage = 'unloopnobgui / unloopunbgui / unloopnobillboardgui / unloopunbillboardgui / unloopnoname / unlooprohg',
+	aliases = { 'unloopunbgui', 'unloopnobillboardgui', 'unloopunbillboardgui', 'unloopnoname', 'unlooprohg' },
+	description = 'Disconnects the character part trigger if it exists.',
+	callback = function(args, speaker)
+		if charPartTrigger then
+			charPartTrigger:Disconnect()
 		end
 	end
-end)
+})
+
+commands:new('spasm', {
+	usage = 'spasm',
+	aliases = {},
+	description = 'Plays a spasm animation on the player character if they are using the R6 rig type.',
+	callback = function(args, speaker)
+		if not r15(speaker) then
+			local pchar = speaker.Character
+			local AnimationId = "33796059"
+			local SpasmAnim = Instance.new("Animation")
+			SpasmAnim.AnimationId = "rbxassetid://" .. AnimationId
+			local Spasm = pchar:FindFirstChildOfClass('Humanoid'):LoadAnimation(SpasmAnim)
+			Spasm:Play()
+			Spasm:AdjustSpeed(99)
+		else
+			notify('R6 Required', 'This command requires the R6 rig type')
+		end
+	end
+})
+
+commands:new('unspasm', {
+	usage = 'unspasm / nospasm',
+	aliases = { 'nospasm' },
+	description = 'Stops the spasm effect and destroys the spasm animation.',
+	callback = function(args, speaker)
+		Spasm:Stop()
+		SpasmAnim:Destroy()
+	end
+})
+
+commands:new('headthrow', {
+	usage = 'headthrow',
+	aliases = {},
+	description = 'Plays the head throw animation for R6 rig type players.',
+	callback = function(args, speaker)
+		if not r15(speaker) then
+			local AnimationId = "35154961"
+			local Anim = Instance.new("Animation")
+			Anim.AnimationId = "rbxassetid://"..AnimationId
+			local k = speaker.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(Anim)
+			k:Play(0)
+			k:AdjustSpeed(1)
+		else
+			notify('R6 Required', 'This command requires the R6 rig type')
+		end
+	end
+})
+
+commands:new('animation', {
+	usage = 'animation / anim [animationId] [speed]',
+	aliases = { 'anim' },
+	description = 'Plays an animation on the player\'s character. Requires R6 rig type.',
+	callback = function(args, speaker)
+		if not r15(speaker) then
+			local pchar = speaker.Character
+			local AnimationId = tostring(args[1])
+			local Anim = Instance.new("Animation")
+			Anim.AnimationId = "rbxassetid://" .. AnimationId
+			local k = pchar:FindFirstChildOfClass('Humanoid'):LoadAnimation(Anim)
+			k:Play()
+
+			if args[2] then
+				k:AdjustSpeed(tostring(args[2]))
+			end
+		else
+			notify('R6 Required', 'This command requires the R6 rig type')
+		end
+	end
+})
+
+commands:new('noanim', {
+	usage = 'noanim',
+	aliases = {},
+	description = 'Disables animations for the player.',
+	callback = function(args, speaker)
+		if speaker.Character and speaker.Character:FindFirstChild('Animate') then
+			speaker.Character.Animate.Disabled = true
+		end
+	end
+})
+
+commands:new('reanim', {
+	usage = 'reanim',
+	aliases = {},
+	description = 'Re-enables the animations for the player character.',
+	callback = function(args, speaker)
+		if speaker.Character and speaker.Character:FindFirstChild("Animate") then
+			speaker.Character.Animate.Disabled = false
+		end
+	end
+})
+
+commands:new('animspeed', {
+	usage = 'animspeed [speed]',
+	aliases = {},
+	description = 'Adjusts the speed of the currently playing animations for the speaker.',
+	callback = function(args, speaker)
+		local Char = speaker.Character
+		local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+
+		for _, v in next, Hum:GetPlayingAnimationTracks() do
+			v:AdjustSpeed(tonumber(args[1]) or 1)
+		end
+	end
+})
+
+commands:new('copyanimation', {
+	usage = 'copyanimation / copyanim / copyemote [player]',
+	aliases = { 'copyanim', 'copyemote' },
+	description = 'Copies the animations from another player to the speaker.',
+	callback = function(args, speaker)
+		local players = getPlayer(args[1], speaker)
+		for _, v in ipairs(players) do
+			local char = Players[v].Character
+			for _, v1 in pairs(speaker.Character:FindFirstChildOfClass('Humanoid'):GetPlayingAnimationTracks()) do
+				v1:Stop()
+			end
+			for _, v1 in pairs(Players[v].Character:FindFirstChildOfClass('Humanoid'):GetPlayingAnimationTracks()) do
+				if not string.find(v1.Animation.AnimationId, "507768375") then
+					local ANIM = speaker.Character:FindFirstChildOfClass('Humanoid'):LoadAnimation(v1.Animation)
+					ANIM:Play(.1, 1, v1.Speed)
+					ANIM.TimePosition = v1.TimePosition
+					task.spawn(function()
+						v1.Stopped:Wait()
+						ANIM:Stop()
+						ANIM:Destroy()
+					end)
+				end
+			end
+		end
+	end
+})
+
+commands:new('copyanimationid', {
+	usage = 'copyanimationid / copyanimid / copyemoteid [player]',
+	aliases = { 'copyanimid', 'copyemoteid' },
+	description = 'Copies the animation IDs of the specified player or yourself to the clipboard.',
+	callback = function(args, speaker)
+		local copyAnimId = function(player)
+			local found = "Animations Copied"
+
+			for _, v in pairs(player.Character:FindFirstChildWhichIsA("Humanoid"):GetPlayingAnimationTracks()) do
+				local animationId = v.Animation.AnimationId
+				local assetId = animationId:find("rbxassetid://") and animationId:match("%d+")
+
+				if not string.find(animationId, "507768375") and not string.find(animationId, "180435571") then
+					if assetId then
+						local success, result = pcall(function()
+							return MarketplaceService:GetProductInfo(tonumber(assetId)).Name
+						end)
+						local name = success and result or "Failed to get name"
+						found = found .. "\n\nName: " .. name .. "\nAnimation Id: " .. animationId
+					else
+						found = found .. "\n\nAnimation Id: " .. animationId
+					end
+				end
+			end
+
+			if found ~= "Animations Copied" then
+				toClipboard(found)
+			else
+				notify("Animations", "No animations to copy")
+			end
+		end
+
+		if args[1] then
+			copyAnimId(Players[getPlayer(args[1], speaker)[1]])
+		else
+			copyAnimId(speaker)
+		end
+	end
+})
+
+commands:new('stopanimations', {
+	usage = 'stopanimations / stopanims / stopanim',
+	aliases = { 'stopanims', 'stopanim' },
+	description = 'Stops all playing animations for the speaker.',
+	callback = function(args, speaker)
+		local Char = speaker.Character
+		local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+
+		if Hum then
+			for _, v in next, Hum:GetPlayingAnimationTracks() do
+				v:Stop()
+			end
+		end
+	end
+})
+
+commands:new('refreshanimations', {
+	usage = 'refreshanimations / refreshanimation / refreshanims / refreshanim',
+	aliases = { 'refreshanimation', 'refreshanims', 'refreshanim' },
+	description = 'Disables and refreshes the character\'s animations.',
+	callback = function(args, speaker)
+		local Char = speaker.Character or speaker.CharacterAdded:Wait()
+		local Human = Char and Char:WaitForChild('Humanoid', 15)
+		local Animate = Char and Char:WaitForChild('Animate', 15)
+
+		if not Human or not Animate then
+			return notify('Refresh Animations', 'Failed to get Animate/Humanoid')
+		end
+
+		Animate.Disabled = true
+		for _, v in ipairs(Human:GetPlayingAnimationTracks()) do
+			v:Stop()
+		end
+		Animate.Disabled = false
+	end
+})
+
+commands:new('allowcustomanim', {
+	usage = 'allowcustomanim / allowcustomanimations',
+	aliases = { 'allowcustomanimations' },
+	description = 'Enables custom animations for the player.',
+	callback = function(args, speaker)
+		StarterPlayer.AllowCustomAnimations = true
+		execCmd('refreshanimations')
+	end
+})
+
+commands:new('unallowcustomanim', {
+	usage = 'unallowcustomanim / unallowcustomanimations',
+	aliases = { 'unallowcustomanimations' },
+	description = 'Disables custom animations in the game.',
+	callback = function(args, speaker)
+		StarterPlayer.AllowCustomAnimations = false
+		execCmd('refreshanimations')
+	end
+})
+
+commands:new('loopanimation', {
+	usage = 'loopanimation / loopanim',
+	aliases = { 'loopanim' },
+	description = 'Loops all the currently playing animations for the speaker\'s character.',
+	callback = function(args, speaker)
+		local Char = speaker.Character
+		local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
+		if Human then
+			for _, v in ipairs(Human:GetPlayingAnimationTracks()) do
+				v.Looped = true
+			end
+		end
+	end
+})
+
+commands:new('tpposition', {
+	usage = 'tpposition / tppos [x] [y] [z]',
+	aliases = { 'tppos' },
+	description = 'Teleports the player to the specified position (x, y, z).',
+	callback = function(args, speaker)
+		if #args < 3 then return end
+		local tpX, tpY, tpZ = tonumber(args[1]:gsub(",", "")), tonumber(args[2]:gsub(",", "")), tonumber(args[3]:gsub(",", ""))
+		local char = speaker.Character
+		if char and getRoot(char) then
+			getRoot(char).CFrame = CFrame.new(tpX, tpY, tpZ)
+		end
+	end
+})
+
+commands:new('tweentpposition', {
+	usage = 'tweentpposition / ttppos [x] [y] [z]',
+	aliases = { 'ttppos' },
+	description = 'Teleports the player to the specified coordinates using a tween animation.',
+	callback = function(args, speaker)
+		if #args < 3 then return end
+		local tpX, tpY, tpZ = tonumber(args[1]:gsub(",", "")), tonumber(args[2]:gsub(",", "")), tonumber(args[3]:gsub(",", ""))
+
+		local char = speaker.Character
+		if char and getRoot(char) then
+			TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(tpX, tpY, tpZ)}):Play()
+		end
+	end
+})
+
+commands:new('offset', {
+	usage = 'offset [x] [y] [z]',
+	aliases = {},
+	description = 'Offsets the player\'s character position by the given x, y, z values.',
+	callback = function(args, speaker)
+		if #args < 3 then
+			return
+		end
+		if speaker.Character then
+			speaker.Character:TranslateBy(Vector3.new(tonumber(args[1]) or 0, tonumber(args[2]) or 0, tonumber(args[3]) or 0))
+		end
+	end
+})
+
+commands:new('tweenoffset', {
+	usage = 'tweenoffset / toffset [x] [y] [z]',
+	aliases = { 'toffset' },
+	description = 'Tweens the player\'s character to the specified offset position.',
+	callback = function(args, speaker)
+		if #args < 3 then return end
+
+		local tpX, tpY, tpZ = tonumber(args[1]), tonumber(args[2]), tonumber(args[3])
+		local char = speaker.Character
+
+		if char and getRoot(char) then
+			TweenService:Create(getRoot(speaker.Character), TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(tpX, tpY, tpZ)}):Play()
+		end
+	end
+})
+
+commands:new('clickteleport', {
+	usage = 'clickteleport',
+	aliases = {},
+	description = 'Notifies the user to set up click teleport in keybind settings.',
+	callback = function(args, speaker)
+		if speaker == Players.LocalPlayer then
+			notify('Click TP', 'Go to Settings > Keybinds > Add to set up click tp')
+		end
+	end
+})
+
+commands:new('mouseteleport', {
+	usage = 'mouseteleport / mousetp',
+	aliases = { 'mousetp' },
+	description = 'Teleports the player to the position of the mouse cursor.',
+	callback = function(args, speaker)
+		local root = getRoot(speaker.Character)
+		local pos = IYMouse.Hit
+		if root and pos then
+			root.CFrame = CFrame.new(pos.X, pos.Y + 3, pos.Z, select(4, root.CFrame:components()))
+		end
+	end
+})
+
+commands:new('tptool', {
+	usage = 'tptool / teleporttool',
+	aliases = { 'teleporttool' },
+	description = 'Gives the player a tool to teleport to the clicked position.',
+	callback = function(args, speaker)
+		local TpTool = Instance.new("Tool")
+		TpTool.Name = "Teleport Tool"
+		TpTool.RequiresHandle = false
+		TpTool.Parent = speaker.Backpack
+
+		TpTool.Activated:Connect(function()
+			local Char = speaker.Character or workspace:FindFirstChild(speaker.Name)
+			local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+
+			if not Char or not HRP then
+				return warn("Failed to find HumanoidRootPart")
+			end
+
+			HRP.CFrame = CFrame.new(IYMouse.Hit.X, IYMouse.Hit.Y + 3, IYMouse.Hit.Z, select(4, HRP.CFrame:components()))
+		end)
+	end
+})
+
+commands:new('clickdelete', {
+	usage = 'clickdelete',
+	aliases = {},
+	description = 'Notifies the user to set up click delete in keybind settings.',
+	callback = function(args, speaker)
+		if speaker == Players.LocalPlayer then
+			notify('Click Delete', 'Go to Settings > Keybinds > Add to set up click delete')
+		end
+	end
+})
+
+commands:new('getposition', {
+	usage = 'getposition / getpos / notifypos / notifyposition [player]',
+	aliases = { 'getpos', 'notifypos', 'notifyposition' },
+	description = 'Displays the specified player\'s position in a notification.',
+	callback = function(args, speaker)
+		local players = getPlayer(args[1], speaker)
+		for _, v in pairs(players) do
+			local char = Players[v].Character
+			local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
+			pos = pos and pos.Position
+
+			if not pos then
+				return notify('GetPosition Error', 'Missing character')
+			end
+
+			local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
+			notify('Current Position', roundedPos)
+		end
+	end
+})
+
+commands:new('copyposition', {
+	usage = 'copyposition / copypos [player]',
+	aliases = { 'copypos' },
+	description = 'Copies the specified player\'s position to the clipboard.',
+	callback = function(args, speaker)
+		local players = getPlayer(args[1], speaker)
+		for _, v in pairs(players) do
+			local char = Players[v].Character
+			local pos = char and (getRoot(char) or char:FindFirstChildWhichIsA("BasePart"))
+			pos = pos and pos.Position
+
+			if not pos then
+				return notify('GetPosition Error', 'Missing character')
+			end
+
+			local roundedPos = math.round(pos.X) .. ", " .. math.round(pos.Y) .. ", " .. math.round(pos.Z)
+			toClipboard(roundedPos)
+		end
+	end
+})
+
+commands:new('walktopos', {
+	usage = 'walktopos [x] [y] [z]',
+	aliases = { 'walktoposition' },
+	description = 'Moves the player to the specified 3D position.',
+	callback = function(args, speaker)
+		local humanoid = speaker.Character and speaker.Character:FindFirstChildOfClass('Humanoid')
+		if humanoid then
+			if humanoid.SeatPart then
+				humanoid.Sit = false
+				wait(0.1)
+			end
+			humanoid.WalkToPoint = Vector3.new(tonumber(args[1]), tonumber(args[2]), tonumber(args[3]))
+		end
+	end
+})
+
+commands:new('speed', {
+	usage = 'speed / ws [number]',
+	aliases = { 'ws', 'walkspeed' },
+	description = 'Sets the Humanoid\'s walking speed to the given value.',
+	callback = function(args, speaker)
+		if args[2] then
+			local speed = args[2] or 16
+			if isNumber(speed) then
+				speaker.Character:FindFirstChildOfClass('Humanoid').WalkSpeed = speed
+			end
+		else
+			local speed = args[1] or 16
+			if isNumber(speed) then
+				speaker.Character:FindFirstChildOfClass('Humanoid').WalkSpeed = speed
+			end
+		end
+	end
+})
 
 addcmd('spoofspeed',{'spoofws','spoofwalkspeed'},function(args, speaker)
 	if args[1] and isNumber(args[1]) then
-		if hookmetamethod then
+		if type(hookmetamethod) == 'function' then
 			local char = speaker.Character
 			local setspeed;
 			local index; index = hookmetamethod(game, "__index", function(self, key)
