@@ -10,6 +10,7 @@
 
 --- @diagnostic disable: undefined-global
 local env = type(getgenv) == 'function' and getgenv()
+assert(type(env) == 'table', 'Missing or invalid global environment')
 
 if type(env.stop_phantomforces_esp) == 'function' then
 	env.stop_phantomforces_esp()
