@@ -186,8 +186,8 @@ connect(runtime.RenderStepped, function()
 					if result then
 						local hitPart = result.Instance
 						local hitModel = hitPart:FindFirstAncestorWhichIsA('Model')
-						local hitFolder = hitPart:FindFirstAncestorWhichIsA('Folder')
-						if hitFolder and hitModel then
+						local playersFolder = hitPart:FindFirstAncestor('Players')
+						if playersFolder and hitModel then
 							characters[root] = hitModel
 							highlight.Adornee = hitModel
 						end
