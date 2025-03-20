@@ -322,7 +322,7 @@ end)
 
 --[=[ END SCRIPT ]=]--
 
-env.stop_phantomforces_esp = function()
+local function onExit()
 	stop_loops = true
 	
 	for _, connection in ipairs(connections) do
@@ -344,3 +344,6 @@ env.stop_phantomforces_esp = function()
 	casting = {}
 	characters = setmetatable({}, { __mode = 'v' })
 end
+
+pcall(game.BindToClose, game, onExit)
+env.stop_phantomforces_esp = onExit
