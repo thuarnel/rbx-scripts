@@ -40,7 +40,7 @@ connect(workspace:GetPropertyChangedSignal('CurrentCamera'), function()
 end)
 
 local red, green = Color3.fromRGB(255, 37, 40), Color3.fromRGB(38, 255, 99)
-local beams = {}
+local beams = setmetatable({}, {__mode = "v"})
 local casting = {}
 local highlights = {}
 local characters = setmetatable({}, { __mode = 'v' })
@@ -129,6 +129,15 @@ local frame_time = 1 / 30
 local last_time = tick()
 
 connect(runtime.RenderStepped, function()
+	for root, beam in pairs(beams) do
+		if not root:IsDescendantOf(workspace) or not beam or not beam.Parent then
+			if beam and beam.Destroy then
+				beam:Destroy()
+			end
+			beams[root] = nil
+		end
+	end	
+
 	cameraPart.CFrame = camera.CFrame - Vector3.new(0, 2, 0)
 
 	local current_time = tick()
@@ -156,7 +165,7 @@ connect(runtime.RenderStepped, function()
 		local myPosition = camera.CFrame.Position
 	
 		for _, root in pairs(roots:GetChildren()) do
-			if typeof(root) == 'Instance' and root:IsA('BasePart') then
+			if root:IsA('BasePart') then
 				root.Transparency = 0
 	
 				local enable_hl = true
@@ -314,10 +323,23 @@ end)
 
 env.stop_phantomforces_esp = function()
 	stop_loops = true
-	for _, c in ipairs(connections) do
-		c:Disconnect()
+	
+	for _, connection in ipairs(connections) do
+		if typeof(connection) == 'RBXScriptConnection' then
+			connection:Disconnect()
+		end
 	end
-	for _, i in ipairs(instances) do
-		i:Destroy()
+	table.clear(connections)
+	
+	for _, instance in ipairs(instances) do
+		if typeof(instance) == 'Instance' then
+			instance:Destroy()
+		end
 	end
+	table.clear(instances)
+	
+	highlights = {}
+	beams = {}
+	casting = {}
+	characters = setmetatable({}, { __mode = 'v' })
 end
